@@ -16,28 +16,11 @@ A web-accessible terminal interface for Claude Code that makes AI coding assista
 2. **Claude Docker image** built (from the claude-docker-setup)
 3. **Node.js** 18+ installed
 4. **Anthropic API key** from [console.anthropic.com](https://console.anthropic.com/account/keys)
-5. **Supabase project** (for authentication) - see [Supabase setup guide](./supabase-auth-setup-guide.md)
+5. **Supabase project** (for authentication) - see [Supabase setup guide](./docs/supabase-auth-setup.md)
 
 ## Environment Setup
 
-### Automated Setup (Recommended)
-
-Run the interactive setup script to configure your environment:
-
-```bash
-cd ~/claude-web-terminal
-./setup-environment.sh
-```
-
-This script will:
-- Prompt you for all required configuration values
-- Create `.env` files in the root and client directories
-- Validate your inputs
-- Provide next steps for getting started
-
-### Manual Setup
-
-If you prefer to set up manually:
+### Setup
 
 1. **Copy the example environment files:**
    ```bash
