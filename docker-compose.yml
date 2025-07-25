@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+      - "8081:8081"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - WS_PORT=8081
+    env_file:
+      - .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./workspaces:/app/workspaces
+    restart: unless-stopped
