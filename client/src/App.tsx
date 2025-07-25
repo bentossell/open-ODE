@@ -1,9 +1,9 @@
 import React from 'react';
-import TerminalApp from './TerminalApp';
+import EnhancedTerminalApp from './EnhancedTerminalApp';
 import './App.css';
 
 function App() {
-  return <TerminalApp />;
+  return <EnhancedTerminalApp />;
 }
 
 export default App;
