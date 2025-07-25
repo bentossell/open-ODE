@@ -391,6 +391,92 @@ app.get('/api/config', (req, res) => {
   res.json(serverConfig);
 });
 
+// Command whitelist - maps safe identifiers to actual commands
+const COMMAND_WHITELIST = {
+  'help': '/help',
+  'list_files': 'ls -la',
+  'git_status': 'git status',
+  'show_model': '/model',
+  'init_project': '/init',
+  'clear_screen': 'clear',
+  'current_dir': 'pwd',
+  'test': 'echo "Hello from Claude Code!"'
+};
+
+// API endpoint to run whitelisted commands
+app.post('/api/run-command', authenticateToken, async (req, res) => {
+  const { command } = req.body;
+  const userId = req.userId;
+  
+  // Validate command exists in whitelist
+  if (!command || !COMMAND_WHITELIST[command]) {
+    return res.status(400).json({ 
+      error: 'Invalid command',
+      availableCommands: Object.keys(COMMAND_WHITELIST)
+    });
+  }
+  
+  // Get the actual command to run
+  const actualCommand = COMMAND_WHITELIST[command];
+  
+  // Find user's active session
+  const userSessionIds = userSessions.get(userId);
+  if (!userSessionIds || userSessionIds.size === 0) {
+    return res.status(400).json({ 
+      error: 'No active terminal session. Please start a session first.' 
+    });
+  }
+  
+  // Get the first active session
+  const sessionId = Array.from(userSessionIds)[0];
+  const session = sessions.get(sessionId);
+  
+  if (!session || !session.ptyProcess) {
+    return res.status(400).json({ 
+      error: 'Session not found or not active' 
+    });
+  }
+  
+  // Send command to PTY and collect output
+  return new Promise((resolve) => {
+    let output = '';
+    let timeout;
+    
+    const outputHandler = (data) => {
+      output += data;
+      // Reset timeout on new data
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        // Clean up listener
+        session.ptyProcess.off('data', outputHandler);
+        // Send response
+        res.json({ 
+          output: output.trim(),
+          command: actualCommand 
+        });
+        resolve();
+      }, 500); // Wait 500ms after last output
+    };
+    
+    // Listen for output
+    session.ptyProcess.on('data', outputHandler);
+    
+    // Send the command
+    session.ptyProcess.write(actualCommand + '\n');
+    
+    // Timeout after 5 seconds
+    setTimeout(() => {
+      session.ptyProcess.off('data', outputHandler);
+      res.json({ 
+        output: output.trim() || 'Command timed out',
+        command: actualCommand,
+        timeout: true
+      });
+      resolve();
+    }, 5000);
+  });
+});
+
 // Authenticated endpoints
 app.get('/api/user/sessions', authenticateToken, (req, res) => {
   const userSessionIds = getUserSessions(req.userId);

@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  web:
+    image: ${DOCKER_REGISTRY}/openode-web:staging
+    ports:
+      - "3000:3000"
+      - "8081:8081"
+    environment:
+      - NODE_ENV=staging
+      - PORT=3000
+      - WS_PORT=8081
+    env_file:
+      - ./environments/staging/.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./ssl:/etc/ssl:ro
+    networks:
+      - openode-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-staging.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/ssl:ro
+    networks:
+      - openode-staging
+    depends_on:
+      - web
+    restart: unless-stopped
+
+networks:
+  openode-staging:
+    driver: bridge
