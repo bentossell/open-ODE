@@ -41,10 +41,18 @@ class ClaudeSession {
         Tty: false,
         OpenStdin: false,
         WorkingDir: '/workspace',
-        Env: [`ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY}`],
+        Env: [
+          `ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY}`,
+          'CLAUDE_USE_API_KEY=true',  // Force API key mode
+          'CLAUDE_DISABLE_TELEMETRY=true',
+          'CLAUDE_TRUST_WORKSPACE=true'
+        ],
         HostConfig: {
           AutoRemove: true,
-          Binds: [`${realPath}:/workspace`]
+          Binds: [
+            `${realPath}:/workspace`,
+            `claude-config:/root/.config/claude-code`  // Persist Claude config
+          ]
         }
       });
 
