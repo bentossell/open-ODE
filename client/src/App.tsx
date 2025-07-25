@@ -1,12 +1,13 @@
 import React from 'react';
-import TerminalApp from './TerminalApp';
+import AppLayout from './components/AppLayout';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import './App.css';
 
 function App() {
   return (
     <WebSocketProvider>
-      <TerminalApp />
+      {/* Replace with new UI layout */}
+      <AppLayout />
     </WebSocketProvider>
   );
 }
