@@ -4,9 +4,10 @@
 Building a web-accessible terminal interface for Claude Code that allows non-technical users to interact with AI coding assistance through a browser.
 
 ## 📊 Current Status
-- **Version**: 1.0.0
+- **Version**: 1.1.0
 - **Last Session**: 2025-07-25
 - **Next Priority**: Test complete system integration
+- **Latest Feature**: Slash command system for custom shortcuts
 
 ## 🔥 Active Tasks (Current Session)
 Working on:
@@ -14,6 +15,7 @@ Working on:
 - [x] Build backend server with Docker integration
 - [x] Implement WebSocket streaming
 - [x] Create frontend with xterm.js
+- [x] Implement slash command system
 - [ ] Test Docker connection and Claude Code integration
 
 ## 📋 Master Task List
@@ -25,6 +27,9 @@ Working on:
 - [x] Build React frontend with TypeScript
 - [x] Integrate xterm.js for terminal emulation
 - [x] Design clean UI for non-technical users
+- [x] Implement slash command system with modal UI (2025-07-25)
+- [x] Add local storage persistence for commands
+- [x] Create command management interface
 
 ### High Priority
 - [ ] Test end-to-end Docker integration
@@ -40,15 +45,22 @@ Working on:
 ## 🏗️ Project Structure
 ```
 claude-web-terminal/
-├── server.js           <-- Backend server (Express + WebSocket)
-├── package.json        <-- Backend dependencies
-├── client/             <-- React frontend
+├── server.js                <-- Backend server (Express + WebSocket)
+├── package.json             <-- Backend dependencies
+├── client/                  <-- React frontend
 │   ├── src/
-│   │   ├── App.tsx    <-- Main terminal interface
-│   │   └── App.css    <-- Styling
+│   │   ├── TerminalApp.tsx  <-- Main terminal interface
+│   │   ├── App.css          <-- Styling
+│   │   ├── components/      <-- UI components
+│   │   │   ├── SlashCommandModal.tsx
+│   │   │   └── SlashCommandList.tsx
+│   │   ├── services/        <-- Business logic
+│   │   │   └── slashCommandService.ts
+│   │   └── types/           <-- TypeScript types
+│   │       └── slashCommand.ts
 │   └── package.json
-├── CLAUDE.md          <-- You are here
-└── README.md          <-- Setup instructions
+├── CLAUDE.md                <-- You are here
+└── README.md                <-- Setup instructions
 ```
 
 ## 💡 Key Architecture Decisions
@@ -78,8 +90,9 @@ claude-web-terminal/
 1. User sees friendly interface with tips
 2. Clicks "Start Session" button
 3. Terminal connects via WebSocket
-4. User types naturally to Claude
-5. Sees streaming responses in real-time
+4. User types naturally to Claude or uses slash commands
+5. Slash commands are intercepted and expanded before sending
+6. Sees streaming responses in real-time
 
 ## ⚡ Quick Commands
 ```bash
@@ -101,6 +114,8 @@ npm start
 - ANTHROPIC_API_KEY must be set in environment
 - WebSocket runs on port 8080, HTTP on 3000
 - Each session gets isolated Docker container
+- Slash commands are stored in browser local storage
+- Example command `/hn` pre-loaded for testing
 
 ## 🔄 Next Session Setup
 1. Verify Docker image: `docker images | grep claude-env`

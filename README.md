@@ -9,6 +9,7 @@ A web-accessible terminal interface for Claude Code that makes AI coding assista
 - 🎨 **Friendly UI** - Designed for non-technical users
 - 🔒 **Isolated sessions** - Each user gets their own Docker container
 - 💬 **Natural interaction** - Just type questions like you're chatting
+- ⚡ **Slash Commands** - Create custom shortcuts for frequently used prompts
 
 ## Prerequisites
 
@@ -67,6 +68,43 @@ A web-accessible terminal interface for Claude Code that makes AI coding assista
 3. Backend creates a Docker container with Claude Code
 4. WebSocket streams terminal I/O in real-time
 5. Users can type naturally to interact with Claude
+
+## Slash Commands
+
+Slash commands allow you to create custom shortcuts for frequently used prompts:
+
+### Creating a Slash Command
+
+1. Click "➕ New Command" in the control panel
+2. Enter your shortcut (e.g., `/hn`)
+3. Write the full prompt that should be sent to Claude
+4. Optionally add:
+   - Description for easy identification
+   - Reference files from your workspace
+   - URLs that Claude should use
+
+### Using Slash Commands
+
+Simply type your shortcut in the terminal and press Enter:
+```
+/hn
+```
+
+This will automatically expand to your full prompt and send it to Claude.
+
+### Example Commands
+
+- `/hn` - Fetch latest Hacker News posts
+- `/debug` - Analyze error logs and suggest fixes
+- `/review` - Review code for best practices
+- `/test` - Generate unit tests for current file
+
+### Managing Commands
+
+- Click "📋 View Commands" to see all your saved commands
+- Edit commands by clicking the ✏️ icon
+- Delete commands with the 🗑️ icon
+- Commands are saved locally in your browser
 
 ## Architecture
 

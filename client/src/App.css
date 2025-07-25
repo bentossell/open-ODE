@@ -77,6 +77,26 @@ body {
   gap: 0.5rem;
 }
 
+.slash-command-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.command-button {
+  padding: 0.5rem 1rem;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.command-button:hover {
+  background-color: #5a6268;
+}
+
 .terminal-container {
   flex: 1;
   padding: 1.5rem;

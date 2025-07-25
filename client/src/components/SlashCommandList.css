@@ -1,0 +1,158 @@
+.command-list-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.command-list-content {
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.command-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.command-list-header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 24px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #999999;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #ffffff;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999999;
+}
+
+.empty-state p {
+  margin: 8px 0;
+}
+
+.commands-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.command-card {
+  background-color: #2d2d2d;
+  border: 1px solid #3e3e3e;
+  border-radius: 6px;
+  padding: 16px;
+  transition: border-color 0.2s;
+}
+
+.command-card:hover {
+  border-color: #4e4e4e;
+}
+
+.command-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.command-header h3 {
+  margin: 0;
+  color: #007acc;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 16px;
+}
+
+.command-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-button,
+.delete-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  transition: opacity 0.2s;
+}
+
+.edit-button:hover,
+.delete-button:hover {
+  opacity: 0.7;
+}
+
+.command-description {
+  color: #cccccc;
+  font-size: 14px;
+  margin: 0 0 8px 0;
+}
+
+.command-prompt {
+  background-color: #1e1e1e;
+  border: 1px solid #3e3e3e;
+  border-radius: 4px;
+  padding: 8px;
+  color: #ffffff;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  margin-bottom: 12px;
+  max-height: 60px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.command-metadata {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #999999;
+}
+
+.metadata-item {
+  display: flex;
+  gap: 4px;
+}
+
+.metadata-label {
+  font-weight: 500;
+}
+
+.metadata-value {
+  color: #cccccc;
+}
