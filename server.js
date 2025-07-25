@@ -447,8 +447,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
-const PORT = process.env.PORT || 3000;
-const WS_PORT = process.env.WS_PORT || 8081;
+const PORT = parseInt(process.env.PORT) || 3000;
+const WS_PORT = parseInt(process.env.WS_PORT) || 8081;
 
 // Function to find available port
 async function findAvailablePort(startPort) {
