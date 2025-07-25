@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'This workflow has authentication issues. Use deploy-digitalocean-alt.yml instead'
+        description: 'This workflow has authentication issues. Use deploy-digitalocean-simple.yml instead'
         required: true
         type: choice
         options:
