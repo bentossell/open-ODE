@@ -1,14 +1,9 @@
-name: Deploy to DigitalOcean (Disabled - Use Alternative)
+name: Deploy to DigitalOcean (Alternative)
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
-    inputs:
-      confirm:
-        description: 'This workflow has authentication issues. Use deploy-digitalocean-alt.yml instead'
-        required: true
-        type: choice
-        options:
-          - 'use-alternative-workflow'
 
 jobs:
   deploy:
@@ -18,15 +13,19 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DO_SSH_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.DO_HOST }} >> ~/.ssh/known_hosts
+
     - name: Deploy to DigitalOcean Droplet
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.DO_HOST }}
-        username: ${{ secrets.DO_USERNAME }}
-        key: ${{ secrets.DO_SSH_KEY }}
-        port: 22
-        script_stop: true
-        script: |
+      env:
+        DO_HOST: ${{ secrets.DO_HOST }}
+        DO_USERNAME: ${{ secrets.DO_USERNAME }}
+      run: |
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DO_USERNAME@$DO_HOST << 'EOF'
           # Navigate to project directory
           cd /opt/open-ODE
           
@@ -62,3 +61,4 @@ jobs:
           
           # Verify deployment
           docker ps | grep openode-container
+        EOF
