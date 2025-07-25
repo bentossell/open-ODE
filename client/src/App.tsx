@@ -1,14 +1,9 @@
 import React from 'react';
-import TerminalApp from './TerminalApp';
-import { WebSocketProvider } from './contexts/WebSocketContext';
-import './App.css';
+import './index.css';
+import OpenInterface from './OpenInterface';
 
 function App() {
-  return (
-    <WebSocketProvider>
-      <TerminalApp />
-    </WebSocketProvider>
-  );
+  return <OpenInterface />;
 }
 
 export default App;
