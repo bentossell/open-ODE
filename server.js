@@ -118,7 +118,7 @@ class ClaudeSession {
       
       // Create container with Claude environment
       this.container = await docker.createContainer({
-        Image: 'claude-env',
+        Image: 'openode-claude-env',
         Cmd: ['sleep', 'infinity'], // Keep container running
         Tty: false,
         OpenStdin: false,
