@@ -173,7 +173,7 @@ class ClaudeSession {
         'exec',
         '-it',
         containerId,
-        '/root/.npm-global/bin/claude'
+        'claude'
       ], {
         name: 'xterm-color',
         cols: 80,

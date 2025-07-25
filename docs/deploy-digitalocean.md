@@ -101,16 +101,11 @@ Copy and paste these commands one by one:
 
 1. **Build the Claude environment image:**
    ```bash
-   cd /opt
-   git clone https://github.com/bentossell/claude-docker-setup.git
-   cd claude-docker-setup
-   docker build -t claude-env .
-   ```
-
-2. **Go back to the main project:**
-   ```bash
    cd /opt/open-ODE
+   docker build -f Dockerfile.claude-env -t claude-env .
    ```
+   
+   This builds the Claude Code environment using the official `@anthropic-ai/claude-code` package.
 
 ## Step 7: Update WebSocket Configuration
 

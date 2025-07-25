@@ -1,0 +1,26 @@
+FROM ubuntu:latest
+
+# Update and install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    python3 \
+    python3-pip \
+    nodejs \
+    npm
+
+# Install Claude Code CLI globally
+RUN npm install -g @anthropic-ai/claude-code
+
+# Create workspace directory
+RUN mkdir -p /workspace
+
+# Set working directory
+WORKDIR /workspace
+
+# Set up environment variable for API key
+ENV ANTHROPIC_API_KEY=""
+
+# Default command
+CMD ["/bin/bash"]
