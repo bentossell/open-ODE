@@ -74,9 +74,15 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           throw new Error('No authentication token found');
         }
 
-        const wsUrl = process.env.NODE_ENV === 'production' 
+        // Determine if we're in production based on the hostname
+        const isProduction = window.location.hostname === 'openode.ai' || 
+                           window.location.hostname === 'www.openode.ai';
+        
+        const wsUrl = isProduction 
           ? `wss://${window.location.host}` 
           : `ws://localhost:${configRes.wsPort}`;
+        
+        console.log('WebSocket connecting to:', wsUrl, { isProduction, hostname: window.location.hostname });
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
