@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ChatInterface.css';
+import { useWebSocket } from './contexts/WebSocketContext';
 
 interface Message {
   id: string;
@@ -8,13 +9,12 @@ interface Message {
   timestamp: Date;
 }
 
-interface ChatInterfaceProps {
-  ws: WebSocket | null;
-  connected: boolean;
-  sessionStarted: boolean;
-}
+export const ChatInterface: React.FC = () => {
+  // WebSocket context
+  const { status, send, onMessage, offMessage } = useWebSocket();
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ ws, connected, sessionStarted }) => {
+  const sessionStarted = status === 'session-started';
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,11 +30,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ ws, connected, ses
   }, [messages]);
 
   useEffect(() => {
-    if (!ws) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      const data = JSON.parse(event.data);
-      
+    const handleMessage = (data: any) => {
       if (data.type === 'output') {
         // Claude's response
         setMessages(prev => {
@@ -59,12 +55,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ ws, connected, ses
       }
     };
 
-    ws.addEventListener('message', handleMessage);
-    return () => ws.removeEventListener('message', handleMessage);
-  }, [ws]);
+    onMessage(handleMessage);
+    return () => offMessage(handleMessage);
+  }, [
+    onMessage,
+    offMessage
+  ]);
 
   const sendMessage = () => {
-    if (!inputValue.trim() || !ws || !sessionStarted || isLoading) return;
+    if (!inputValue.trim() || !sessionStarted || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -77,10 +76,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ ws, connected, ses
     setInputValue('');
     setIsLoading(true);
 
-    ws.send(JSON.stringify({
-      type: 'message',
-      message: inputValue
-    }));
+    // Determine if it's a slash command. If so, strip the leading '/'.
+    const isCommand = inputValue.startsWith('/')
+    const payload = isCommand ? inputValue.slice(1) : inputValue;
+
+    // Send to the underlying CLI (Claude running in PTY)
+    send({
+      type: 'input',
+      data: `${payload}\n`
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

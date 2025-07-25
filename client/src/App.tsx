@@ -1,12 +1,12 @@
 import React from 'react';
-import TerminalApp from './TerminalApp';
+import ChatApp from './ChatApp';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import './App.css';
 
 function App() {
   return (
     <WebSocketProvider>
-      <TerminalApp />
+      <ChatApp />
     </WebSocketProvider>
   );
 }
