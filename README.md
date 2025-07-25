@@ -15,20 +15,106 @@ A web-accessible terminal interface for Claude Code that makes AI coding assista
 1. **Docker** installed and running
 2. **Claude Docker image** built (from the claude-docker-setup)
 3. **Node.js** 18+ installed
-4. **ANTHROPIC_API_KEY** environment variable set
+4. **Anthropic API key** from [console.anthropic.com](https://console.anthropic.com/account/keys)
+5. **Supabase project** (for authentication) - see [Supabase setup guide](./supabase-auth-setup-guide.md)
+
+## Environment Setup
+
+### Automated Setup (Recommended)
+
+Run the interactive setup script to configure your environment:
+
+```bash
+cd ~/claude-web-terminal
+./setup-environment.sh
+```
+
+This script will:
+- Prompt you for all required configuration values
+- Create `.env` files in the root and client directories
+- Validate your inputs
+- Provide next steps for getting started
+
+### Manual Setup
+
+If you prefer to set up manually:
+
+1. **Copy the example environment files:**
+   ```bash
+   cp .env.example .env
+   cp client/.env.example client/.env
+   ```
+
+2. **Edit the root `.env` file:**
+   ```env
+   # Required
+   ANTHROPIC_API_KEY=your-anthropic-api-key
+   SUPABASE_JWT_SECRET=your-supabase-jwt-secret
+   
+   # Optional (defaults shown)
+   PORT=3000
+   WS_PORT=8081
+   DOCKER_IMAGE_NAME=claude-env
+   DOCKER_CONTAINER_PREFIX=claude-session
+   SESSION_TIMEOUT_MINUTES=30
+   MAX_CONCURRENT_SESSIONS=10
+   ```
+
+3. **Edit the client `.env` file:**
+   ```env
+   # Required
+   REACT_APP_SUPABASE_URL=https://your-project.supabase.co
+   REACT_APP_SUPABASE_ANON_KEY=your-supabase-anon-key
+   
+   # Optional (defaults shown)
+   REACT_APP_API_URL=http://localhost:3000
+   REACT_APP_WS_URL=ws://localhost:8081
+   REACT_APP_ENABLE_AUTH=true
+   REACT_APP_ENABLE_FILE_UPLOAD=false
+   REACT_APP_MAX_MESSAGE_LENGTH=10000
+   ```
+
+### Environment Variables Reference
+
+#### Server Variables (`.env`)
+
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `ANTHROPIC_API_KEY` | Yes | Your Anthropic API key | - |
+| `SUPABASE_JWT_SECRET` | Yes | JWT secret from Supabase settings | - |
+| `PORT` | No | HTTP server port | 3000 |
+| `WS_PORT` | No | WebSocket server port | 8081 |
+| `DOCKER_IMAGE_NAME` | No | Name of the Claude Docker image | claude-env |
+| `DOCKER_CONTAINER_PREFIX` | No | Prefix for Docker container names | claude-session |
+| `SESSION_TIMEOUT_MINUTES` | No | Session timeout duration | 30 |
+| `MAX_CONCURRENT_SESSIONS` | No | Maximum concurrent sessions | 10 |
+
+#### Client Variables (`client/.env`)
+
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `REACT_APP_SUPABASE_URL` | Yes | Your Supabase project URL | - |
+| `REACT_APP_SUPABASE_ANON_KEY` | Yes | Supabase anonymous key | - |
+| `REACT_APP_API_URL` | No | Backend API URL | http://localhost:3000 |
+| `REACT_APP_WS_URL` | No | WebSocket server URL | ws://localhost:8081 |
+| `REACT_APP_ENABLE_AUTH` | No | Enable authentication | true |
+| `REACT_APP_ENABLE_FILE_UPLOAD` | No | Enable file upload feature | false |
+| `REACT_APP_MAX_MESSAGE_LENGTH` | No | Maximum message length | 10000 |
 
 ## Quick Start
 
-1. **Clone and install dependencies:**
+1. **Set up your environment:**
    ```bash
    cd ~/claude-web-terminal
+   ./setup-environment.sh
+   ```
+   
+   Or manually create `.env` files as described above.
+
+2. **Install dependencies:**
+   ```bash
    npm install
    cd client && npm install && cd ..
-   ```
-
-2. **Set your API key:**
-   ```bash
-   export ANTHROPIC_API_KEY="your-api-key-here"
    ```
 
 3. **Start the servers:**
