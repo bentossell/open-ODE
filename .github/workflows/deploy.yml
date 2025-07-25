@@ -1,0 +1,40 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to DigitalOcean Droplet
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.DO_HOST }}
+        username: ${{ secrets.DO_USERNAME }}
+        key: ${{ secrets.DO_SSH_KEY }}
+        script: |
+          # Navigate to project directory
+          cd /opt/open-ODE
+          
+          # Pull latest changes
+          git pull origin main
+          
+          # Build new Docker image with cache
+          docker build -f Dockerfile.claude-env -t claude-env .
+          
+          # Update and restart containers
+          docker compose down
+          docker compose up -d --build
+          
+          # Clean up old images
+          docker image prune -f
+          
+          # Verify deployment
+          docker compose ps
