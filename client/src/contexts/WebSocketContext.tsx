@@ -74,7 +74,10 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           throw new Error('No authentication token found');
         }
 
-        const ws = new WebSocket(`ws://localhost:${configRes.wsPort}`);
+        const wsUrl = process.env.NODE_ENV === 'production' 
+          ? `wss://${window.location.host}` 
+          : `ws://localhost:${configRes.wsPort}`;
+        const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
         ws.onopen = () => {
