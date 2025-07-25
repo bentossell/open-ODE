@@ -57,3 +57,40 @@
     @apply bg-background text-foreground m-0 font-sans antialiased;
   }
 }
+
+/* XTerm.js link styling */
+.xterm .xterm-link-layer {
+  z-index: 2;
+}
+
+.xterm .xterm-link {
+  cursor: pointer;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-bottom-color 0.2s ease-in-out;
+}
+
+.xterm .xterm-link:hover {
+  border-bottom-color: currentColor;
+  text-decoration: underline;
+}
+
+/* Ensure links are visible with proper contrast */
+.xterm .xterm-link-matcher-0 {
+  color: #1976d2; /* Blue color for file paths */
+}
+
+.xterm .xterm-link-matcher-0:hover {
+  color: #1565c0;
+  text-decoration: underline;
+}
+
+/* Style for HTTP/HTTPS links */
+.xterm a {
+  color: #1976d2;
+  text-decoration: none;
+}
+
+.xterm a:hover {
+  text-decoration: underline;
+}

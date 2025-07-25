@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useWebSocket } from './contexts/WebSocketContext';
 import { supabase } from './lib/supabase';
+import { SimpleCommandUI } from './components/SimpleCommandUI';
 
 interface Message {
   id: string;
@@ -26,6 +27,7 @@ const ModernTerminal: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  const [showSimpleUI, setShowSimpleUI] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -130,6 +132,27 @@ const ModernTerminal: React.FC = () => {
     });
   };
 
+  // Handle command from palette or buttons
+  const sendCommand = (command: string) => {
+    if (!sessionStarted || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: command,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    // Send command directly to PTY
+    send({
+      type: 'input',
+      data: command + '\n'
+    });
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -210,7 +233,12 @@ const ModernTerminal: React.FC = () => {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setShowSimpleUI(!showSimpleUI)}
+                title="Toggle Simple UI"
+              >
                 <Settings className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setShowTerminal(!showTerminal)}>
@@ -223,9 +251,12 @@ const ModernTerminal: React.FC = () => {
           </div>
         </div>
 
-        {/* Messages Area */}
+        {/* Messages Area or Simple UI */}
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="mx-auto max-w-4xl space-y-4">
+          {showSimpleUI ? (
+            <SimpleCommandUI />
+          ) : (
+            <div className="mx-auto max-w-4xl space-y-4">
             {messages.length === 0 && sessionStarted && (
               <div className="text-center py-8">
                 <h3 className="text-lg font-semibold mb-2">Welcome to Claude Code</h3>
@@ -271,8 +302,10 @@ const ModernTerminal: React.FC = () => {
             )}
 
             <div ref={messagesEndRef} />
-          </div>
+            </div>
+          )}
         </div>
+
 
         {/* Input Area */}
         <div className="border-t border-border p-4">

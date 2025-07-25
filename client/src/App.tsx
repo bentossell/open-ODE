@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
-import ModernTerminal from './ModernTerminal';
+import { XTerminal } from './XTerminal';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { supabase } from './lib/supabase';
 import { Auth } from './components/Auth';
@@ -40,7 +40,7 @@ function App() {
 
   return (
     <WebSocketProvider>
-      <ModernTerminal />
+      <XTerminal />
     </WebSocketProvider>
   );
 }
