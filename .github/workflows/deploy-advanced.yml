@@ -38,6 +38,7 @@ jobs:
           
           # Fix Git safe directory issue
           git config --global --add safe.directory /opt/claude-web-terminal
+          git config --global pull.rebase false
           
           # Navigate to the application directory
           cd /opt/claude-web-terminal
@@ -49,9 +50,10 @@ jobs:
           # Stash any local changes
           git stash || true
           
-          # Pull latest changes
+          # Reset to origin/main to avoid conflicts
           echo "📥 Pulling latest changes..."
-          git pull origin main
+          git fetch origin main
+          git reset --hard origin/main
           
           # Restore .env files (they shouldn't be in git)
           if [ -f .env.backup.* ]; then
