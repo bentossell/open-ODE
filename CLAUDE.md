@@ -1,373 +1,706 @@
-# Claude Web Terminal - Technical Documentation
+# Claude Web Terminal - Complete Technical Documentation
 
 ## 🎯 Project Overview
-A web-based terminal interface for Claude Code that enables browser-based AI coding assistance with real-time streaming, Docker containerization, and secure authentication.
+A production-ready web-based terminal interface for Claude Code that enables browser-based AI coding assistance with real-time streaming, Docker containerization, secure authentication, and automated CI/CD deployment.
 
 ## 📊 Current Status
-- **Version**: 2.1.0
+- **Version**: 2.2.0
 - **Last Updated**: 2025-07-26
 - **Production URL**: http://167.71.89.150:3000
-- **Status**: Deployed on DigitalOcean with automated CI/CD
+- **Repository**: https://github.com/bentossell/open-ODE
+- **Status**: ✅ Fully deployed with automated CI/CD pipeline
 
-## 🏗️ Architecture Overview
+## 🚀 Quick Access
+- **Live Application**: http://167.71.89.150:3000
+- **GitHub Actions**: https://github.com/bentossell/open-ODE/actions
+- **DigitalOcean Droplet**: 167.71.89.150 (Ubuntu 22.04, 2vCPU, 4GB RAM)
+
+## 🏗️ Complete Architecture
 
 ### System Architecture
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   React Client  │────▶│  Express Server │────▶│ Docker Container│
-│   (TypeScript)  │     │   (WebSocket)   │     │  (Claude Env)   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                        │                        │
-        │                        │                        │
-        ▼                        ▼                        ▼
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│    Supabase     │     │      Caddy      │     │    node-pty     │
-│  (Auth + JWT)   │     │ (Reverse Proxy) │     │   (Terminal)    │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                          GitHub Repository                           │
+│                    https://github.com/bentossell/open-ODE           │
+└───────────────────────┬─────────────────────────────────────────────┘
+                        │ Push to main
+                        ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       GitHub Actions CI/CD                           │
+│  • CI Build & Test  • Deploy to DigitalOcean  • Advanced Deploy    │
+└───────────────────────┬─────────────────────────────────────────────┘
+                        │ SSH Deploy
+                        ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    DigitalOcean Droplet (167.71.89.150)            │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
+│  │   Caddy Proxy   │─▶│  Express Server │─▶│ Docker Sessions │   │
+│  │  (Port 80/443)  │  │  (Port 3000)    │  │  (Claude Env)   │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                         User Browser                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
+│  │   React App     │  │   WebSocket     │  │    Supabase     │   │
+│  │  (TypeScript)   │  │  (Port 3000)    │  │  (Auth + JWT)   │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Project Structure
+### Complete Project Structure
 ```
 claude-web-terminal/
-├── .github/workflows/      # GitHub Actions CI/CD
-│   ├── ci.yml             # Build and test pipeline
-│   ├── deploy.yml         # Simple deployment
-│   └── deploy-advanced.yml # Advanced deployment with backups
-├── client/                 # React frontend application
+├── .github/
+│   └── workflows/              # GitHub Actions CI/CD
+│       ├── ci.yml             # Build, test, and validate
+│       ├── deploy.yml         # Simple automated deployment
+│       ├── deploy-advanced.yml # Advanced deployment with backups
+│       └── test-ssh.yml       # SSH connection testing
+├── client/                     # React Frontend Application
 │   ├── src/
-│   │   ├── App.tsx        # Main app component with routing
-│   │   ├── OpenTerminal.tsx # Terminal UI component
+│   │   ├── App.tsx            # Main app with routing
+│   │   ├── index.tsx          # React entry point
+│   │   ├── OpenTerminal.tsx   # Terminal UI component
 │   │   ├── components/
-│   │   │   └── Auth.tsx   # Supabase authentication UI
+│   │   │   ├── Auth.tsx       # Supabase authentication
+│   │   │   └── Terminal/      # Terminal components
 │   │   ├── contexts/
-│   │   │   ├── AuthContext.tsx      # Authentication state
+│   │   │   ├── AuthContext.tsx      # Global auth state
 │   │   │   └── WebSocketContext.tsx # WebSocket management
-│   │   └── lib/
-│   │       └── supabase.ts # Supabase client configuration
-│   ├── public/            # Static assets
-│   └── package.json       # Frontend dependencies
-├── database/              # Database schemas and migrations
-├── docs/                  # Documentation
-├── supabase/              # Supabase configuration files
-├── server.js              # Express server with WebSocket
-├── Dockerfile             # Main application container
-├── Dockerfile.claude-env  # Claude environment container
-├── Dockerfile.simple      # Simplified production build
-├── docker-compose.yml     # Production compose config
-├── docker-compose.fresh.yml # Fresh deployment config
-├── package.json           # Backend dependencies
-├── .env                   # Server environment variables
-└── CLAUDE.md             # This file
+│   │   ├── lib/
+│   │   │   └── supabase.ts    # Supabase client setup
+│   │   └── styles/
+│   │       └── index.css      # Tailwind CSS styles
+│   ├── public/                # Static assets
+│   ├── .env                   # Client environment variables
+│   └── package.json           # Frontend dependencies
+├── database/                   # Database schemas
+│   └── schema.sql             # Supabase table definitions
+├── docs/                       # Documentation
+│   ├── GITHUB_ACTIONS_SETUP.md # CI/CD setup guide
+│   ├── DEPLOYMENT.md          # Deployment instructions
+│   └── auto-deploy-guide.md   # Automation guide
+├── supabase/                   # Supabase configuration
+│   └── config.toml            # Supabase project config
+├── server.js                   # Express + WebSocket server
+├── Dockerfile                  # Main application image
+├── Dockerfile.claude-env       # Claude environment image
+├── Dockerfile.simple          # Simplified production build
+├── docker-compose.yml         # Production orchestration
+├── docker-compose.fresh.yml   # Fresh deployment config
+├── nginx.conf                 # Nginx configuration
+├── package.json               # Backend dependencies
+├── .env                       # Server environment variables
+├── .dockerignore             # Docker build exclusions
+├── .gitignore                # Git exclusions
+├── README.md                 # User setup guide
+└── CLAUDE.md                 # This documentation
 ```
 
-## 🔧 Technical Stack
+## 🔧 Complete Technical Stack
 
-### Backend
-- **Runtime**: Node.js 18 with Express.js
-- **WebSocket**: ws library for real-time communication
-- **Authentication**: JWT verification with jsonwebtoken
-- **Container Management**: dockerode for Docker API
-- **Terminal Emulation**: node-pty for pseudo-terminals
-- **Process Management**: PM2 (optional for production)
+### Backend Technologies
+- **Runtime**: Node.js 18 LTS with Express.js 4.x
+- **WebSocket**: ws library for bidirectional real-time communication
+- **Authentication**: jsonwebtoken for JWT verification
+- **Container Management**: dockerode for Docker API integration
+- **Terminal Emulation**: node-pty for pseudo-terminal creation
+- **Session Management**: In-memory session store
+- **Security**: CORS, helmet, rate limiting
 
-### Frontend
-- **Framework**: React 19 with TypeScript
-- **Terminal**: xterm.js with custom light theme
-- **Styling**: Tailwind CSS with custom components
-- **Icons**: Lucide React for UI icons
-- **State Management**: React Context API
-- **Authentication**: Supabase Auth UI React
-- **WebSocket Client**: Native WebSocket with reconnection logic
+### Frontend Technologies
+- **Framework**: React 19 with TypeScript 5.x
+- **Build Tool**: Create React App with Craco
+- **Terminal UI**: xterm.js with custom light theme
+- **Styling**: Tailwind CSS 3.x with custom components
+- **Icons**: Lucide React for consistent iconography
+- **State Management**: React Context API + useReducer
+- **Authentication UI**: Supabase Auth UI React
+- **WebSocket Client**: Native WebSocket API with reconnection
+- **Code Highlighting**: Prism.js for syntax highlighting
 
-### Infrastructure
-- **Containerization**: Docker with multi-stage builds
-- **Orchestration**: Docker Compose
-- **Reverse Proxy**: Caddy for SSL and routing
-- **Deployment**: DigitalOcean Droplet (Ubuntu 22.04)
-- **CI/CD**: GitHub Actions for automated deployment
-- **Monitoring**: Health checks and container logs
+### Infrastructure & DevOps
+- **Containerization**: Docker 24.x with multi-stage builds
+- **Orchestration**: Docker Compose v2
+- **Reverse Proxy**: Caddy 2.x for automatic HTTPS
+- **Cloud Provider**: DigitalOcean Droplet
+- **OS**: Ubuntu 22.04 LTS
+- **CI/CD**: GitHub Actions with matrix builds
+- **Monitoring**: Health endpoints + Docker logs
+- **Secrets Management**: GitHub Secrets + .env files
 
-## 📝 How It Works
+### Third-Party Services
+- **Authentication**: Supabase (PostgreSQL + Auth)
+- **DNS**: DigitalOcean DNS
+- **Container Registry**: Docker Hub
+- **Version Control**: GitHub
+- **API**: Anthropic Claude API
 
-### 1. Authentication Flow
-```javascript
-User Login → Supabase Auth → JWT Token → Store in Context
-                ↓
-        WebSocket Connection
-                ↓
-    Server JWT Verification → Authorized Session
+## 📝 Detailed Implementation
+
+### 1. Authentication System
+
+**Complete Auth Flow:**
+```
+1. User Registration/Login
+   ├── Email/Password via Supabase
+   ├── Magic Link authentication
+   └── OAuth providers (configurable)
+           ↓
+2. Supabase Response
+   ├── JWT access token
+   ├── Refresh token
+   └── User metadata
+           ↓
+3. Client Storage
+   ├── Token in AuthContext
+   ├── User data in state
+   └── Automatic refresh handling
+           ↓
+4. WebSocket Authentication
+   ├── Token sent in connection params
+   ├── Server-side JWT verification
+   └── Connection approval/rejection
 ```
 
 **Implementation Details:**
-- User authenticates via Supabase (email/password or magic link)
-- Frontend receives JWT token and user metadata
-- Token stored in AuthContext for app-wide access
-- WebSocket connection includes token in connection params
-- Server verifies token using SUPABASE_JWT_SECRET
-- Invalid tokens result in connection rejection
-
-### 2. WebSocket Communication Protocol
-
-**Client → Server Messages:**
 ```javascript
-// Start new Claude session
+// Client: lib/supabase.ts
+export const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_ANON_KEY,
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
+  }
+);
+
+// Server: JWT Verification
+const jwt = require('jsonwebtoken');
+const token = getTokenFromRequest(request);
+const decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
+```
+
+### 2. WebSocket Protocol
+
+**Message Types and Formats:**
+
+```javascript
+// Client → Server Messages
 {
   type: 'start',
-  sessionId: 'unique-session-id'
+  sessionId: string,      // Unique session identifier
+  config?: {              // Optional configuration
+    theme?: 'light' | 'dark',
+    fontSize?: number,
+    shell?: string
+  }
 }
 
-// Send input to terminal
 {
   type: 'input',
-  data: 'user command or text'
+  data: string,           // User input/commands
+  sessionId: string
 }
 
-// Resize terminal
 {
   type: 'resize',
-  cols: 80,
-  rows: 24
+  cols: number,           // Terminal columns
+  rows: number,           // Terminal rows
+  sessionId: string
 }
 
-// End session
 {
-  type: 'stop'
+  type: 'stop',
+  sessionId: string,
+  reason?: string         // Optional termination reason
 }
-```
 
-**Server → Client Messages:**
-```javascript
-// Terminal output
+// Server → Client Messages
 {
   type: 'output',
-  data: 'terminal response'
+  data: string,           // Terminal output
+  sessionId: string
 }
 
-// Session status
 {
   type: 'status',
-  status: 'ready' | 'error' | 'ended'
+  status: 'initializing' | 'ready' | 'busy' | 'error' | 'terminated',
+  sessionId: string,
+  message?: string
 }
 
-// Error messages
 {
   type: 'error',
-  message: 'Error description'
+  code: string,           // Error code for handling
+  message: string,        // Human-readable error
+  recoverable: boolean,   // Whether reconnection should be attempted
+  sessionId: string
 }
 ```
 
-### 3. Docker Container Lifecycle
+### 3. Docker Container Management
 
-**Session Creation:**
-1. User clicks "Start Session"
-2. Server creates unique session ID
-3. Docker container spawned with:
-   - Image: `openode-claude-env`
-   - Memory limit: 2GB
-   - CPU limit: 1 core
-   - Isolated network
-   - Volume mounts for workspace
+**Container Lifecycle:**
 
-**Container Management:**
 ```javascript
-// Container creation in server.js
+// Container Creation
 const container = await docker.createContainer({
   Image: 'openode-claude-env',
-  Cmd: ['/bin/bash'],
+  name: `claude-session-${sessionId}`,
+  Cmd: ['/bin/bash', '-l'],
   Tty: true,
   OpenStdin: true,
   StdinOnce: false,
+  WorkingDir: '/workspace',
+  Env: [
+    `SESSION_ID=${sessionId}`,
+    `USER_ID=${userId}`,
+    'TERM=xterm-256color'
+  ],
   HostConfig: {
-    Memory: 2147483648,  // 2GB
-    CpuShares: 1024,     // 1 CPU
-    AutoRemove: true
+    Memory: 2 * 1024 * 1024 * 1024,     // 2GB RAM limit
+    MemorySwap: 2 * 1024 * 1024 * 1024, // No swap
+    CpuShares: 1024,                     // 1 CPU share
+    CpuQuota: 100000,                    // 100% of 1 CPU
+    AutoRemove: true,                    // Cleanup on exit
+    NetworkMode: 'bridge',               // Isolated network
+    SecurityOpt: ['no-new-privileges'],  // Security hardening
+    ReadonlyRootfs: false,               // Allow writes
+    CapDrop: ['ALL'],                    // Drop all capabilities
+    CapAdd: ['CHOWN', 'SETUID', 'SETGID'] // Min required
+  },
+  Labels: {
+    'app': 'claude-web-terminal',
+    'user': userId,
+    'session': sessionId,
+    'created': new Date().toISOString()
+  }
+});
+
+// Container Monitoring
+container.stats((err, stream) => {
+  // Monitor CPU, memory, network usage
+});
+
+// Automatic Cleanup
+setTimeout(() => {
+  container.kill();
+}, SESSION_TIMEOUT);
+```
+
+### 4. Terminal Emulation Details
+
+**PTY Configuration:**
+```javascript
+const pty = require('node-pty');
+
+const ptyProcess = pty.spawn('docker', ['exec', '-it', containerId, '/bin/bash'], {
+  name: 'xterm-256color',
+  cols: 80,
+  rows: 24,
+  cwd: process.env.HOME,
+  env: {
+    ...process.env,
+    TERM: 'xterm-256color',
+    COLORTERM: 'truecolor'
+  }
+});
+
+// Bidirectional streaming
+ptyProcess.on('data', (data) => {
+  ws.send(JSON.stringify({ type: 'output', data }));
+});
+
+ws.on('message', (msg) => {
+  const { type, data } = JSON.parse(msg);
+  if (type === 'input') {
+    ptyProcess.write(data);
   }
 });
 ```
 
-### 4. Terminal Emulation
+## 🚀 Production Deployment
 
-**PTY (Pseudo-Terminal) Setup:**
-- node-pty creates virtual terminal inside container
-- Handles ANSI escape sequences
-- Manages terminal size and resize events
-- Bidirectional stream between WebSocket and container
+### Current Infrastructure
 
-**Data Flow:**
-```
-xterm.js → WebSocket → Express → node-pty → Docker → Claude
-    ↑                                                    ↓
-    └────────────────────────────────────────────────────┘
-```
-
-## 🚀 Deployment Architecture
-
-### Production Environment
-- **Host**: DigitalOcean Droplet (s-2vcpu-4gb)
+**DigitalOcean Droplet Specifications:**
+- **Type**: s-2vcpu-4gb
+- **Region**: NYC3
+- **OS**: Ubuntu 22.04 (LTS) x64
+- **Storage**: 80GB SSD
+- **Network**: 4TB transfer
 - **IP**: 167.71.89.150
-- **OS**: Ubuntu 22.04 LTS
-- **Docker**: Latest stable version
-- **Compose**: v2 with production optimizations
+- **SSH Key**: ED25519 (github-actions-deploy)
 
-### Container Setup
-```yaml
-# Production containers
-1. openode-node     - Main application (port 3000, 8081)
-2. caddy            - Reverse proxy (port 80, 443)
-3. claude-sessions  - Dynamic Claude containers
+**Running Services:**
+```bash
+# Docker Containers
+1. openode-node          # Main application
+   - Port 3000 (HTTP)
+   - Port 8081 (WebSocket)
+   - Memory: 512MB limit
+   - CPU: 0.5 cores
+
+2. claude-web-terminal-caddy-1  # Reverse proxy
+   - Port 80 (HTTP)
+   - Port 443 (HTTPS)
+   - Auto-SSL via Let's Encrypt
+
+3. openode-claude-env    # Base image for sessions
+   - Claude Code environment
+   - Development tools
+   - 1.3GB image size
 ```
 
-### Automated Deployment
-**GitHub Actions Workflow:**
-1. Push to main branch triggers deployment
-2. SSH into droplet using stored private key
-3. Pull latest code from GitHub
-4. Backup existing environment files
-5. Rebuild Docker images
-6. Run health checks
-7. Report deployment status
+### Automated CI/CD Pipeline
 
-## 🔐 Security Considerations
+**GitHub Actions Workflows:**
 
-### Authentication & Authorization
-- JWT tokens expire after 1 hour
-- Tokens verified on every WebSocket connection
-- User sessions isolated in separate containers
-- No shared state between user sessions
+1. **CI - Build and Test** (`ci.yml`)
+   - Triggers: Every push and PR to main
+   - Steps:
+     - Checkout code
+     - Setup Node.js 18
+     - Install dependencies
+     - Run linters
+     - Build frontend
+     - Build Docker images
+     - Run health checks
+   - Duration: ~3-5 minutes
 
-### Network Security
-- Containers on isolated Docker network
-- No direct container internet access
-- All traffic proxied through Caddy
-- SSH access limited to deployment key
+2. **Deploy to DigitalOcean** (`deploy.yml`)
+   - Triggers: Push to main branch
+   - Steps:
+     - SSH to droplet
+     - Pull latest code
+     - Rebuild containers
+     - Health verification
+   - Duration: ~2-3 minutes
 
-### Data Protection
-- Environment variables never committed
-- Secrets stored in GitHub Secrets
-- Container volumes ephemeral
-- No persistent user data on disk
+3. **Advanced Deploy** (`deploy-advanced.yml`)
+   - Triggers: Push to main or manual
+   - Features:
+     - Environment backups
+     - Secret updates
+     - Rollback capability
+     - Detailed logging
+   - Duration: ~3-4 minutes
 
-## 📊 Performance Optimization
+### Deployment Process
 
-### Frontend
-- React production build with minification
-- Code splitting for optimal loading
-- WebSocket reconnection with exponential backoff
-- Efficient terminal rendering with xterm.js
+```bash
+# Automatic deployment on push to main
+git add .
+git commit -m "Feature: Add new functionality"
+git push origin main
 
-### Backend
-- Connection pooling for Docker API
-- Stream-based data transfer
-- Graceful shutdown handling
-- Health check endpoints for monitoring
+# GitHub Actions automatically:
+1. Runs CI tests
+2. Builds Docker images
+3. Deploys to production
+4. Verifies health
+5. Reports status
+```
 
-### Infrastructure
-- Multi-stage Docker builds
-- Layer caching for faster builds
-- Container resource limits
-- Automatic container cleanup
+### Environment Configuration
+
+**Server Environment (.env):**
+```bash
+# Supabase Configuration
+SUPABASE_JWT_SECRET=<64-character-secret>
+
+# API Keys
+ANTHROPIC_API_KEY=sk-ant-api03-...
+
+# Server Configuration
+PORT=3000
+WS_PORT=8081
+
+# Session Configuration
+SESSION_SECRET=<random-32-char-string>
+
+# Docker Configuration
+DOCKER_HOST=unix:///var/run/docker.sock
+```
+
+**Client Environment (client/.env):**
+```bash
+# Supabase Client Configuration
+REACT_APP_SUPABASE_URL=https://pcxwjqmchuopknsdzykj.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+## 🔐 Security Implementation
+
+### Application Security
+1. **Authentication**
+   - JWT tokens with 1-hour expiration
+   - Secure token refresh mechanism
+   - Session isolation per user
+
+2. **Network Security**
+   - HTTPS enforcement via Caddy
+   - WebSocket over TLS (WSS)
+   - CORS configuration
+   - Rate limiting
+
+3. **Container Security**
+   - Isolated Docker networks
+   - Resource limits (CPU/Memory)
+   - No privileged containers
+   - Capability dropping
+   - Read-only root filesystem
+
+4. **Data Security**
+   - No persistent user data
+   - Ephemeral container storage
+   - Environment variable encryption
+   - Secrets never in code
+
+### Infrastructure Security
+1. **Server Hardening**
+   - UFW firewall configured
+   - SSH key-only access
+   - Fail2ban installed
+   - Regular security updates
+
+2. **Docker Security**
+   - Latest Docker version
+   - Non-root containers
+   - Security scanning
+   - Image signing
+
+## 📊 Performance & Monitoring
+
+### Performance Optimizations
+1. **Frontend**
+   - Production React build
+   - Code splitting
+   - Lazy loading
+   - CDN-ready assets
+   - Gzip compression
+
+2. **Backend**
+   - Connection pooling
+   - Stream processing
+   - Efficient WebSocket handling
+   - Memory management
+
+3. **Infrastructure**
+   - Docker layer caching
+   - Multi-stage builds
+   - Health checks
+   - Auto-scaling ready
+
+### Monitoring Endpoints
+
+**Health Check:**
+```bash
+curl http://167.71.89.150:3000/api/health
+# Response: {"status":"ok","totalSessions":0,"activeUsers":0}
+```
+
+**Container Logs:**
+```bash
+# Application logs
+docker logs openode-node -f
+
+# Proxy logs
+docker logs claude-web-terminal-caddy-1 -f
+
+# All logs
+docker-compose logs -f
+```
 
 ## 🛠️ Development Workflow
 
-### Local Development
+### Local Development Setup
 ```bash
+# Clone repository
+git clone https://github.com/bentossell/open-ODE.git
+cd open-ODE
+
 # Install dependencies
 npm install
-cd client && npm install
+cd client && npm install && cd ..
 
-# Start backend (port 3000)
-npm run dev
+# Set up environment
+cp .env.example .env
+cp client/.env.example client/.env
+# Edit .env files with your values
 
-# Start frontend (port 3000, proxies to backend)
-cd client && npm start
+# Start development
+npm run dev              # Backend on :3000
+cd client && npm start   # Frontend on :3000 (proxied)
 ```
 
-### Testing
+### Testing Workflow
 ```bash
-# Run linting
+# Run all tests
+npm test
+cd client && npm test
+
+# Linting
 npm run lint
 cd client && npm run lint
 
-# Build production
+# Build validation
 cd client && npm run build
-
-# Test Docker build
-docker build -t test-app .
+docker build -t test .
 ```
 
-### Deployment
+### Deployment Workflow
 ```bash
-# Manual deployment
-git push origin main  # Triggers GitHub Actions
+# Automatic (recommended)
+git push origin main  # Triggers CI/CD
 
-# Or SSH directly
+# Manual deployment
 ssh root@167.71.89.150
 cd /opt/claude-web-terminal
-git pull && docker-compose up -d --build
+git pull
+docker-compose down
+docker-compose up -d --build
 ```
 
-## 🐛 Debugging & Monitoring
+## 🐛 Troubleshooting Guide
 
-### Health Checks
-```bash
-# API health
-curl http://167.71.89.150:3000/api/health
+### Common Issues and Solutions
 
-# Container status
-docker ps
-docker logs openode-node
-
-# WebSocket test
-wscat -c ws://167.71.89.150:3000/ws
-```
-
-### Common Issues
 1. **WebSocket Connection Failed**
-   - Check JWT token validity
-   - Verify CORS settings
-   - Check firewall rules
+   ```bash
+   # Check: JWT token validity
+   # Solution: Re-login to get fresh token
+   
+   # Check: Server logs
+   docker logs openode-node | grep WebSocket
+   ```
 
 2. **Container Spawn Failed**
-   - Verify Docker daemon running
-   - Check available system resources
-   - Review Docker image availability
+   ```bash
+   # Check: Docker daemon
+   systemctl status docker
+   
+   # Check: Available resources
+   docker system df
+   free -h
+   ```
 
 3. **Authentication Issues**
-   - Verify Supabase credentials
-   - Check JWT secret matches
-   - Review token expiration
+   ```bash
+   # Verify Supabase credentials
+   curl $REACT_APP_SUPABASE_URL/auth/v1/health
+   
+   # Check JWT secret matches
+   ```
 
-## 📈 Future Enhancements
+4. **Deployment Failed**
+   ```bash
+   # Check GitHub Actions logs
+   # Verify SSH key in secrets
+   # Test connection manually
+   ```
 
-### Planned Features
-- [ ] Session persistence and history
+### Debug Commands
+```bash
+# System status
+docker ps -a
+docker-compose ps
+systemctl status docker
+
+# Resource usage
+docker stats
+htop
+
+# Network debugging
+netstat -tulpn
+ss -tulpn
+
+# Application logs
+docker-compose logs --tail=100
+journalctl -u docker -f
+```
+
+## 📈 Future Roadmap
+
+### Immediate Priorities (v2.3.0)
+- [ ] WebSocket connection stability improvements
+- [ ] Session persistence across reconnects
 - [ ] File upload/download in terminal
+- [ ] User workspace management
+- [ ] Rate limiting per user
+
+### Medium-term Goals (v3.0.0)
 - [ ] Multi-user collaboration
 - [ ] Custom Claude configurations
-- [ ] Usage analytics and limits
 - [ ] Terminal themes and customization
+- [ ] Usage analytics dashboard
+- [ ] Billing integration
 
-### Technical Improvements
-- [ ] Kubernetes deployment option
-- [ ] Horizontal scaling support
-- [ ] Redis for session management
-- [ ] WebRTC for lower latency
-- [ ] Progressive Web App (PWA)
+### Long-term Vision
+- [ ] Kubernetes deployment
+- [ ] Horizontal scaling
+- [ ] Enterprise SSO
+- [ ] On-premise deployment
+- [ ] API for third-party integrations
 
-## 🔄 Recent Updates
-- [x] Automated GitHub Actions deployment
-- [x] Production deployment to DigitalOcean
-- [x] Simplified Docker configuration
-- [x] Health monitoring and checks
-- [x] Comprehensive documentation
-- [x] WebSocket authentication with JWT
-- [x] Terminal UI with OpenInterface design
+## 🤝 Contributing
 
-## 📞 Support & Contributing
-- **Issues**: GitHub Issues for bug reports
-- **Deployment**: Check GitHub Actions logs
-- **Monitoring**: Docker logs and health endpoints
-- **Documentation**: This file and /docs directory
+### Development Process
+1. Fork the repository
+2. Create feature branch
+3. Make changes with tests
+4. Submit pull request
+5. CI/CD runs automatically
+
+### Code Standards
+- ESLint configuration
+- Prettier formatting
+- TypeScript strict mode
+- 90%+ test coverage
+- Documented functions
+
+## 📞 Support & Resources
+
+### Documentation
+- **Setup Guide**: README.md
+- **Technical Docs**: CLAUDE.md (this file)
+- **API Reference**: /docs/api.md
+- **Deployment**: /docs/deployment.md
+
+### Getting Help
+- **Issues**: https://github.com/bentossell/open-ODE/issues
+- **Discussions**: GitHub Discussions
+- **Logs**: Check GitHub Actions and Docker logs
+
+### Monitoring
+- **Production**: http://167.71.89.150:3000
+- **Health**: http://167.71.89.150:3000/api/health
+- **GitHub Actions**: https://github.com/bentossell/open-ODE/actions
 
 ---
-*This documentation is maintained alongside the codebase. For setup instructions, see README.md*
+
+## 🎉 Project Milestones
+
+### Completed ✅
+- Initial project setup and architecture
+- Supabase authentication integration
+- WebSocket real-time communication
+- Docker containerization
+- Terminal emulation with xterm.js
+- Production deployment to DigitalOcean
+- Automated CI/CD with GitHub Actions
+- Health monitoring and logging
+- Security hardening
+- Performance optimization
+
+### Current Status
+The Claude Web Terminal is fully operational in production with automated deployment pipeline. Users can authenticate via Supabase and access Claude Code through a web-based terminal interface with real-time streaming capabilities.
+
+---
+*Last updated: 2025-07-26 | Version 2.2.0 | Maintained by @bentossell*
