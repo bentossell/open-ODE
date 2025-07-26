@@ -1,7 +1,7 @@
 import React from 'react';
 import './index.css';
 // import { OpenTerminal } from './OpenTerminal';
-import BareTerminal from './BareTerminal';
+import { XTerminal } from './XTerminal';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Auth } from './components/Auth';
@@ -31,7 +31,7 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <WebSocketProvider>
-        <BareTerminal />
+        <XTerminal />
       </WebSocketProvider>
     </ErrorBoundary>
   );
