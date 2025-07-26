@@ -20,6 +20,9 @@ jobs:
         username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
+          # Fix Git safe directory issue
+          git config --global --add safe.directory /opt/claude-web-terminal
+          
           # Navigate to the application directory
           cd /opt/claude-web-terminal
           

@@ -36,6 +36,9 @@ jobs:
           echo "🚀 Starting deployment at ${{ env.DEPLOY_TIME }}"
           echo "📝 Deployment message: ${{ github.event.inputs.deploy_message || 'Automated deployment from push to main' }}"
           
+          # Fix Git safe directory issue
+          git config --global --add safe.directory /opt/claude-web-terminal
+          
           # Navigate to the application directory
           cd /opt/claude-web-terminal
           

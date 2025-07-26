@@ -1,6 +1,9 @@
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
-# Update and install dependencies
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update and install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     git \
@@ -8,19 +11,66 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     nodejs \
-    npm
+    npm \
+    sudo \
+    wget \
+    vim \
+    nano \
+    htop \
+    tree \
+    jq \
+    zip \
+    unzip \
+    locales \
+    && rm -rf /var/lib/apt/lists/*
+
+# Generate locale
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 # Install Claude Code CLI globally
 RUN npm install -g @anthropic-ai/claude-code
 
-# Create workspace directory
-RUN mkdir -p /workspace
+# Create a non-root user for running sessions
+RUN useradd -m -s /bin/bash -u 1000 claude-user && \
+    echo 'claude-user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-# Set working directory
-WORKDIR /workspace
+# Create workspace structure
+RUN mkdir -p /home/claude-user/workspace && \
+    mkdir -p /home/claude-user/.config && \
+    mkdir -p /home/claude-user/.cache && \
+    mkdir -p /home/claude-user/projects
 
-# Set up environment variable for API key
+# Set proper permissions
+RUN chown -R claude-user:claude-user /home/claude-user
+
+# Switch to non-root user
+USER claude-user
+
+# Set working directory to user's workspace
+WORKDIR /home/claude-user/workspace
+
+# Configure git for the user
+RUN git config --global user.name "Claude User" && \
+    git config --global user.email "claude@localhost" && \
+    git config --global init.defaultBranch main && \
+    git config --global --add safe.directory '*'
+
+# Set up bash profile
+RUN echo 'export PS1="\[\033[01;32m\]claude@terminal\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$ "' >> ~/.bashrc && \
+    echo 'alias ll="ls -alF"' >> ~/.bashrc && \
+    echo 'alias la="ls -A"' >> ~/.bashrc && \
+    echo 'alias l="ls -CF"' >> ~/.bashrc && \
+    echo 'echo "Welcome to Claude Web Terminal!"' >> ~/.bashrc && \
+    echo 'echo "Your workspace is ready at: ~/workspace"' >> ~/.bashrc
+
+# Environment variables
+ENV HOME=/home/claude-user
+ENV USER=claude-user
+ENV TERM=xterm-256color
 ENV ANTHROPIC_API_KEY=""
 
 # Default command
-CMD ["/bin/bash"]
+CMD ["/bin/bash", "-l"]

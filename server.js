@@ -132,20 +132,27 @@ class ClaudeSession {
       // Create container with Claude environment
       this.container = await docker.createContainer({
         Image: 'openode-claude-env',
+        name: `claude-session-${this.sessionId}`,
         Cmd: ['sleep', 'infinity'], // Keep container running
         Tty: false,
         OpenStdin: false,
-        WorkingDir: '/workspace',
+        User: 'claude-user',
+        WorkingDir: '/home/claude-user/workspace',
         Env: [
           `ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY}`,
           'CLAUDE_USE_API_KEY=true',  // Force API key mode
           'CLAUDE_DISABLE_TELEMETRY=true',
-          'CLAUDE_TRUST_WORKSPACE=true'
+          'CLAUDE_TRUST_WORKSPACE=true',
+          'TERM=xterm-256color',
+          `SESSION_ID=${this.sessionId}`
         ],
         HostConfig: {
           AutoRemove: true,
+          Memory: 2 * 1024 * 1024 * 1024, // 2GB limit
+          CpuShares: 1024, // 1 CPU
+          SecurityOpt: ['no-new-privileges'],
           Binds: [
-            `${realPath}:/workspace`,
+            `${realPath}:/home/claude-user/workspace`,
             `claude-config:/root/.config/claude-code`  // Persist Claude config
           ]
         }
