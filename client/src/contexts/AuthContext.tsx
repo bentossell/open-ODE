@@ -142,8 +142,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
-        // Reduce console spam - only log significant events
-        if (event !== 'TOKEN_REFRESHED') {
+        // Reduce console spam - only log significant events in development
+        if (process.env.NODE_ENV === 'development' && event !== 'TOKEN_REFRESHED' && event !== 'INITIAL_SESSION') {
           console.log('Auth state changed:', event);
         }
         
