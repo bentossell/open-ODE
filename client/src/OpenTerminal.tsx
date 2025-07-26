@@ -315,16 +315,9 @@ export const OpenTerminal: React.FC = () => {
 
         {/* Terminal Container */}
         <div className="flex-1 flex overflow-hidden">
+          {/* Simplified terminal – just a bare Xterm surface without custom header/wrapper */}
           <div className="flex-1 p-6">
-            <div className="h-full bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-              <div className="bg-gray-100 px-4 py-2 border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                  <TerminalIcon className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">Claude Terminal</span>
-                </div>
-              </div>
-              <div ref={terminalRef} className="h-full p-4" />
-            </div>
+            <div ref={terminalRef} className="h-full bg-black overflow-hidden rounded-md" />
           </div>
 
           {/* Right Panel */}
