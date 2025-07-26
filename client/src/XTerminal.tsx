@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
 import { useWebSocket } from './contexts/WebSocketContext';
 import { Button } from './components/ui/button';
@@ -21,47 +20,13 @@ export const XTerminal: React.FC = () => {
   useEffect(() => {
     if (!terminalRef.current || xtermRef.current) return;
 
-    const term = new Terminal({
-      cursorBlink: true,
-      fontSize: 14,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-      theme: {
-        background: '#fafafa',
-        foreground: '#333333',
-        cursor: '#333333',
-        cursorAccent: '#fafafa',
-        selectionBackground: '#b3d4fc',
-        black: '#000000',
-        red: '#e53935',
-        green: '#43a047',
-        yellow: '#fb8c00',
-        blue: '#1976d2',
-        magenta: '#8e24aa',
-        cyan: '#00acc1',
-        white: '#fafafa',
-        brightBlack: '#616161',
-        brightRed: '#ef5350',
-        brightGreen: '#66bb6a',
-        brightYellow: '#ffa726',
-        brightBlue: '#42a5f5',
-        brightMagenta: '#ab47bc',
-        brightCyan: '#26c6da',
-        brightWhite: '#ffffff'
-      },
-    });
+    // Instantiate a *completely* unmodified xterm instance – no custom theme or font overrides.
+    const term = new Terminal();
 
     const fitAddon = new FitAddon();
     
-    // Configure WebLinksAddon with custom handler
-    const webLinksAddon = new WebLinksAddon((event, uri) => {
-      // Handle HTTP/HTTPS links
-      if (uri.startsWith('http://') || uri.startsWith('https://')) {
-        window.open(uri, '_blank', 'noopener,noreferrer');
-      }
-    });
-    
+    // Only load the FitAddon so the terminal resizes correctly.
     term.loadAddon(fitAddon);
-    term.loadAddon(webLinksAddon);
     
     term.open(terminalRef.current);
     fitAddon.fit();
@@ -211,7 +176,8 @@ export const XTerminal: React.FC = () => {
 
         {/* Terminal Area */}
         <div className="flex-1 p-4">
-          <div className="h-full bg-white rounded-lg border border-border overflow-hidden">
+          {/* Render the terminal with **no** additional styling so that nothing interferes with xterm's defaults */}
+          <div className="h-full overflow-hidden">
             <div ref={terminalRef} className="h-full" />
           </div>
         </div>
