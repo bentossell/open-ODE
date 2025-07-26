@@ -109,11 +109,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(session.user);
           
           // Fetch or create profile
-          let profile = await fetchProfile(session.user.id);
-          if (!profile) {
-            profile = await createOrUpdateProfile(session.user);
-          }
-          setProfile(profile);
+          // Temporarily skip profile fetching to avoid blocking
+          // let profile = await fetchProfile(session.user.id);
+          // if (!profile) {
+          //   profile = await createOrUpdateProfile(session.user);
+          // }
+          // setProfile(profile);
+          setProfile(null); // Skip profile for now
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
@@ -137,11 +139,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           // Fetch or create profile on sign in
-          let profile = await fetchProfile(session.user.id);
-          if (!profile) {
-            profile = await createOrUpdateProfile(session.user);
-          }
-          setProfile(profile);
+          // Temporarily skip profile fetching to avoid blocking
+          // let profile = await fetchProfile(session.user.id);
+          // if (!profile) {
+          //   profile = await createOrUpdateProfile(session.user);
+          // }
+          // setProfile(profile);
+          setProfile(null); // Skip profile for now
         } else {
           // Clear profile on sign out
           setProfile(null);
