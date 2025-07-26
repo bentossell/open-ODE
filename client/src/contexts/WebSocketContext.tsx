@@ -49,33 +49,19 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const attemptConnection = useCallback(async (): Promise<void> => {
     try {
-      // Get config and auth token
-      const [configRes, sessionData] = await Promise.all([
-        fetch('/api/config', { credentials: 'omit' })
-          .then(res => (res.ok ? res.json() : { wsPort: 8081 }))
-          .catch(() => ({ wsPort: 8081 })),
-        supabase.auth.getSession()
-      ]);
+      // Get auth token
+      const { data: sessionData } = await supabase.auth.getSession();
 
-      const { session } = sessionData.data;
+      const { session } = sessionData;
       if (!session?.access_token) {
         throw new Error('No authentication token found');
       }
 
-      // Determine if we're in production based on the hostname
-      const isProduction = window.location.hostname === 'openode.ai' || 
-                          window.location.hostname === 'www.openode.ai' ||
-                          window.location.hostname.includes('digitalocean');
-      
+      // Build WebSocket URL from current location (same origin)
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      
-      // Use config port for both dev and prod to ensure consistency
-      const wsUrl = isProduction 
-        ? `${wsProtocol}//${window.location.hostname}:${configRes.wsPort}` 
-        : `ws://localhost:${configRes.wsPort}`;
+      const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
       
       console.log('WebSocket connecting to:', wsUrl, { 
-        isProduction, 
         hostname: window.location.hostname,
         attempt: retryCountRef.current + 1 
       });

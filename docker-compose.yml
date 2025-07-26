@@ -4,12 +4,10 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
-      - "8081:8081"
+      - "3000:3000"  # HTTP and WebSocket on same port
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - WS_PORT=8081
     env_file:
       - .env
     volumes:

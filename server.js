@@ -574,43 +574,51 @@ async function startServers() {
     // In production (Docker), use exact ports; in dev, scan for available ports
     const isProduction = process.env.NODE_ENV === 'production';
     
-    let httpPort, wsPort;
+    let httpPort;
     
     if (isProduction) {
-      // In production, use exact ports (fail if not available)
+      // In production, use exact port (fail if not available)
       httpPort = PORT;
-      wsPort = WS_PORT;
-      console.log('🚀 Starting in production mode with fixed ports');
+      console.log('🚀 Starting in production mode with fixed port');
     } else {
-      // In development, find available ports
+      // In development, find available port
       httpPort = await findAvailablePort(PORT);
-      wsPort = await findAvailablePort(WS_PORT);
-      console.log('🚀 Starting in development mode with dynamic ports');
+      console.log('🚀 Starting in development mode with dynamic port');
     }
     
     const server = app.listen(httpPort, () => {
       console.log(`✅ HTTP server running on port ${httpPort}`);
     });
     
-    // Create WebSocket server
-    wss = new WebSocket.Server({ port: wsPort });
+    // Create WebSocket server on the same port using HTTP upgrade
+    wss = new WebSocket.Server({ noServer: true });
+    
+    // Handle HTTP upgrade requests for WebSocket
+    server.on('upgrade', (request, socket, head) => {
+      const { pathname } = new URL(request.url, `http://${request.headers.host}`);
+      
+      if (pathname === '/ws') {
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          wss.emit('connection', ws, request);
+        });
+      } else {
+        socket.destroy();
+      }
+    });
+    
+    // Use existing connection handler
     wss.on('connection', (ws, req) => handleWebSocketConnection(ws, req));
     
-    console.log(`📡 WebSocket server running on port ${wsPort}`);
+    console.log(`📡 WebSocket server listening on ${httpPort}/ws`);
     
-    if (!isProduction) {
-      if (httpPort !== PORT) {
-        console.log(`⚠️  Port ${PORT} was taken, using ${httpPort} instead`);
-      }
-      if (wsPort !== WS_PORT) {
-        console.log(`⚠️  Port ${WS_PORT} was taken, using ${wsPort} instead`);
-      }
+    if (!isProduction && httpPort !== PORT) {
+      console.log(`⚠️  Port ${PORT} was taken, using ${httpPort} instead`);
     }
     
     // Store config for frontend
     serverConfig = {
       httpPort,
-      wsPort
+      wsPort: httpPort // WebSocket now uses the same port
     };
     
     console.log(`\n🌐 Open http://localhost:${httpPort} in your browser`);
