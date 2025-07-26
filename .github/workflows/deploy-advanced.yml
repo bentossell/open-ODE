@@ -1,8 +1,6 @@
 name: Advanced Deploy to DigitalOcean
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
     inputs:
       deploy_message:
@@ -74,7 +72,7 @@ jobs:
           # Rebuild and restart containers
           echo "🐳 Rebuilding Docker containers..."
           docker compose down
-          docker compose up -d --build
+          docker compose up -d --build --force-recreate
           
           # Wait for services to start
           echo "⏳ Waiting for services to start..."
