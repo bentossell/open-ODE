@@ -8,8 +8,8 @@ const BareTerminal: React.FC = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const { ws, status, sessionId, error } = useWebSocket();
-  const [isSessionStarted, setIsSessionStarted] = useState(false);
+  const { status, send, onMessage, offMessage, connect, disconnect, error } = useWebSocket();
+  const [sessionId] = useState(() => `session-${Date.now()}`);
 
   // Initialize terminal
   useEffect(() => {
@@ -59,18 +59,11 @@ const BareTerminal: React.FC = () => {
 
   // Handle WebSocket messages
   useEffect(() => {
-    if (!ws || !xtermRef.current) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      const data = JSON.parse(event.data);
-      
+    const handleMessage = (data: any) => {
       if (data.type === 'output' && xtermRef.current) {
         xtermRef.current.write(data.data);
       } else if (data.type === 'status') {
         console.log('Session status:', data.status);
-        if (data.status === 'started') {
-          setIsSessionStarted(true);
-        }
       } else if (data.type === 'error') {
         console.error('Session error:', data.error);
         if (xtermRef.current) {
@@ -79,42 +72,40 @@ const BareTerminal: React.FC = () => {
       }
     };
 
-    ws.addEventListener('message', handleMessage);
-    return () => ws.removeEventListener('message', handleMessage);
-  }, [ws]);
+    onMessage(handleMessage);
+    return () => offMessage(handleMessage);
+  }, [onMessage, offMessage]);
 
   // Handle terminal input
   useEffect(() => {
-    if (!xtermRef.current || !ws || !isSessionStarted) return;
+    if (!xtermRef.current || status !== 'session-started') return;
 
     const handleData = (data: string) => {
-      if (ws.readyState === WebSocket.OPEN && sessionId) {
-        ws.send(JSON.stringify({
-          type: 'input',
-          data: data,
-          sessionId: sessionId
-        }));
-      }
+      send({
+        type: 'input',
+        data: data,
+        sessionId: sessionId
+      });
     };
 
     const disposable = xtermRef.current.onData(handleData);
     return () => disposable.dispose();
-  }, [ws, sessionId, isSessionStarted]);
+  }, [send, sessionId, status]);
 
   // Handle terminal resize
   useEffect(() => {
-    if (!xtermRef.current || !fitAddonRef.current || !ws || !sessionId || !isSessionStarted) return;
+    if (!xtermRef.current || !fitAddonRef.current || status !== 'session-started') return;
 
     const handleResize = () => {
-      if (fitAddonRef.current && xtermRef.current && ws.readyState === WebSocket.OPEN) {
+      if (fitAddonRef.current && xtermRef.current) {
         fitAddonRef.current.fit();
         const { cols, rows } = xtermRef.current;
-        ws.send(JSON.stringify({
+        send({
           type: 'resize',
           cols,
           rows,
           sessionId
-        }));
+        });
       }
     };
 
@@ -128,18 +119,18 @@ const BareTerminal: React.FC = () => {
     }
 
     return () => resizeObserver.disconnect();
-  }, [ws, sessionId, isSessionStarted]);
+  }, [send, sessionId, status]);
 
   // Start session when WebSocket is connected
   useEffect(() => {
-    if (status === 'authenticated' && ws && !isSessionStarted) {
+    if (status === 'authenticated') {
       console.log('Starting terminal session...');
-      ws.send(JSON.stringify({
+      send({
         type: 'start',
         sessionId: sessionId
-      }));
+      });
     }
-  }, [status, ws, sessionId, isSessionStarted]);
+  }, [status, send, sessionId]);
 
   return (
     <div style={{ 
@@ -163,8 +154,8 @@ const BareTerminal: React.FC = () => {
           <span style={{ fontSize: '12px', opacity: 0.7 }}>
             {status === 'connecting' && 'Connecting...'}
             {status === 'authenticating' && 'Authenticating...'}
-            {status === 'authenticated' && !isSessionStarted && 'Starting session...'}
-            {status === 'authenticated' && isSessionStarted && 'Connected'}
+            {status === 'authenticated' && 'Starting session...'}
+            {status === 'session-started' && 'Connected'}
             {status === 'disconnected' && 'Disconnected'}
             {error && ` - ${error}`}
           </span>
