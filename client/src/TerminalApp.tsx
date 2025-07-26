@@ -243,8 +243,9 @@ function TerminalApp() {
       </header>
       
       <div className="controls">
-        <button 
-          onClick={startSession} 
+        <button
+          onClick={startSession}
+          onTouchStart={startSession}
           disabled={isStarting || status === 'session-started'}
           className="start-button"
         >

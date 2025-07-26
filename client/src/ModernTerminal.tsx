@@ -199,11 +199,12 @@ const ModernTerminal: React.FC = () => {
         <div className="p-4">
           <div className="mb-6">
             <h1 className="text-xl font-bold mb-2">OpenODE</h1>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="w-full justify-start gap-2"
               onClick={startSession}
+              onTouchStart={startSession}
               disabled={sessionStarted}
             >
               <Plus className="h-4 w-4" />
