@@ -153,11 +153,10 @@ const BareTerminal: React.FC = () => {
           <span>Claude Terminal</span>
           <span style={{ fontSize: '12px', opacity: 0.7 }}>
             {status === 'connecting' && 'Connecting...'}
-            {status === 'authenticating' && 'Authenticating...'}
             {status === 'authenticated' && 'Starting session...'}
             {status === 'session-started' && 'Connected'}
             {status === 'disconnected' && 'Disconnected'}
-            {error && ` - ${error}`}
+            {status === 'error' && error && `Error: ${error}`}
           </span>
         </div>
       </div>
