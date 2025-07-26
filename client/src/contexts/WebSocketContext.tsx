@@ -68,7 +68,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const isProduction = process.env.NODE_ENV === 'production';
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       
-      let wsUrl;
+      let wsUrl: string;
       if (isProduction) {
         // In production, check if we have specific WebSocket configuration
         const wsHost = process.env.REACT_APP_WS_HOST || window.location.hostname;
@@ -182,20 +182,14 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (status === 'connecting') {
       console.log('WebSocket connection already in progress');
-      // Return the existing promise if one is waiting
-      return new Promise((resolve, reject) => {
-        const checkStatus = () => {
-          if (status === 'authenticated') {
-            resolve();
-          } else if (status === 'error' || status === 'disconnected') {
-            reject(new Error('Connection failed'));
-          } else {
-            // Still connecting, check again in 100ms
-            setTimeout(checkStatus, 100);
+      // Wait for existing connection attempt to complete
+      if (connectPromiseRef.current) {
+        return new Promise((resolve, reject) => {
+          if (connectPromiseRef.current) {
+            connectPromiseRef.current = { resolve, reject };
           }
-        };
-        checkStatus();
-      });
+        });
+      }
     }
 
     setStatus('connecting');
