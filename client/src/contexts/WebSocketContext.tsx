@@ -173,15 +173,45 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const connect = useCallback(async (): Promise<void> => {
-    // Prevent multiple connections
-    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
-      console.log('WebSocket already connected or connecting');
+    // If we already have an OPEN and authenticated connection, nothing to do.
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && status === 'authenticated') {
+      console.log('WebSocket already connected and authenticated');
       return Promise.resolve();
     }
+    // If the socket object exists but is still CONNECTING, fall through – the
+    // waiting logic below will handle it.
 
+    // If a connection attempt is already in progress, wait until it either
+    // succeeds (status becomes "authenticated") or fails ("error" / "disconnected").
     if (status === 'connecting') {
-      console.log('WebSocket connection already in progress');
-      return Promise.resolve(); // Let the existing connection complete
+      console.log('WebSocket connection already in progress – awaiting authentication');
+
+      return new Promise<void>((resolve, reject) => {
+        // Temporary handler that listens for auth or error messages coming from
+        // the server so we can resolve / reject accordingly.
+        const handleMessage = (data: any) => {
+          if (data.type === 'auth') {
+            if (data.status === 'authenticated') {
+              // Auth successful – cleanup and resolve.
+              messageHandlersRef.current.delete(handleMessage);
+              resolve();
+            } else {
+              // Auth failed – cleanup and reject.
+              messageHandlersRef.current.delete(handleMessage);
+              reject(new Error(data.error || 'Authentication failed'));
+            }
+          }
+          // If the server sends a general error status while we are waiting,
+          // treat that as a failure as well.
+          if (data.type === 'status' && data.status === 'error') {
+            messageHandlersRef.current.delete(handleMessage);
+            reject(new Error(data.error || 'WebSocket error'));
+          }
+        };
+
+        // Register the temporary handler.
+        messageHandlersRef.current.add(handleMessage);
+      });
     }
 
     setStatus('connecting');
