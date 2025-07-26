@@ -125,9 +125,24 @@ export const XTerminal: React.FC = () => {
 
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    disconnect();
-    window.location.reload();
+    try {
+      // Disconnect WebSocket first
+      disconnect();
+      
+      // Clear terminal
+      if (xtermRef.current) {
+        xtermRef.current.clear();
+      }
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // The auth state change listener in App.tsx will handle the UI update
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      // Fallback to reload if sign out fails
+      window.location.reload();
+    }
   };
 
   return (
