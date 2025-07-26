@@ -7,17 +7,10 @@
 openode.ai {
 	encode gzip
 
-	# WebSocket reverse proxy with upgrade headers
-	reverse_proxy /ws* node:3000 {
-		header_up Host {host}
-		header_up X-Real-IP {remote}
-		header_up X-Forwarded-For {remote}
-		header_up X-Forwarded-Proto {scheme}
-		header_up Connection {>Connection}
-		header_up Upgrade {>Upgrade}
-	}
+	# WebSocket proxy – let Caddy handle the headers
+	reverse_proxy /ws* node:3000
 
-	# HTTP reverse proxy for all other requests
+	# HTTP proxy
 	reverse_proxy /* node:3000 {
 		header_up Host {host}
 		header_up X-Real-IP {remote}
@@ -44,8 +37,6 @@ staging.openode.ai {
 		header_up X-Real-IP {remote}
 		header_up X-Forwarded-For {remote}
 		header_up X-Forwarded-Proto {scheme}
-		header_up Connection {>Connection}
-		header_up Upgrade {>Upgrade}
 	}
 
 	reverse_proxy /* node:3000 {
