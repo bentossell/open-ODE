@@ -285,6 +285,7 @@ export const OpenTerminal: React.FC = () => {
             <span className="text-lg font-semibold text-gray-900">Terminal Session</span>
             <button
               onClick={startSession}
+              onTouchStart={startSession}
               disabled={sessionStarted}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 sessionStarted
