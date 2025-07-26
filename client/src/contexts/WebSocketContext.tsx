@@ -51,7 +51,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       // Get config and auth token
       const [configRes, sessionData] = await Promise.all([
-        fetch('/api/config').then(res => res.json()).catch(() => ({ wsPort: 8081 })),
+        fetch('/api/config', { credentials: 'omit' })
+          .then(res => (res.ok ? res.json() : { wsPort: 8081 }))
+          .catch(() => ({ wsPort: 8081 })),
         supabase.auth.getSession()
       ]);
 
@@ -67,9 +69,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       
-      // Simple WebSocket URL logic that worked
+      // Use config port for both dev and prod to ensure consistency
       const wsUrl = isProduction 
-        ? `${wsProtocol}//${window.location.host}` 
+        ? `${wsProtocol}//${window.location.hostname}:${configRes.wsPort}` 
         : `ws://localhost:${configRes.wsPort}`;
       
       console.log('WebSocket connecting to:', wsUrl, { 

@@ -155,24 +155,22 @@ export const OpenTerminal: React.FC = () => {
 
   const startSession = async () => {
     if (sessionStarted) return;
-    
+
     xtermRef.current?.writeln('\r\n🔄 Starting session...\r\n');
-    
+
     try {
-      // Always ensure we're connected before starting
-      if (status === 'disconnected' || status === 'error') {
+      // Ensure WebSocket is connected & authenticated
+      if (status !== 'authenticated') {
         xtermRef.current?.writeln('🔗 Connecting to server...\r\n');
         await connect();
       }
-      
-      // Once connected and authenticated, start the session
-      if (status === 'authenticated') {
-        xtermRef.current?.writeln('🚀 Starting Claude session...\r\n');
-        send({ type: 'start' });
-      }
+
+      // Send start command regardless of queued state update timing
+      xtermRef.current?.writeln('🚀 Starting Claude session...\r\n');
+      send({ type: 'start' });
     } catch (error) {
       console.error('Failed to start session:', error);
-      xtermRef.current?.writeln(`\r\n❌ Failed to start session: ${error}\r\n`);
+      xtermRef.current?.writeln(`\r\n❌ Failed to start session: ${error instanceof Error ? error.message : error}\r\n`);
     }
   };
 

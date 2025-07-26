@@ -119,6 +119,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
+        
+        // Handle invalid refresh token
+        if (err instanceof Error && err.message.toLowerCase().includes('invalid refresh token')) {
+          console.warn('⚠️ Bad refresh token – clearing session');
+          await supabase.auth.signOut();
+          setError(null); // Don't show error, just redirect to login
+          setLoading(false);
+          return;
+        }
+        
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
@@ -132,7 +142,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
-        console.log('Auth state changed:', event, session);
+        // Reduce console spam - only log significant events
+        if (event !== 'TOKEN_REFRESHED') {
+          console.log('Auth state changed:', event);
+        }
         
         setSession(session);
         setUser(session?.user ?? null);

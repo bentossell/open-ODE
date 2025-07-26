@@ -16,6 +16,13 @@ const docker = new Docker();
 // Supabase JWT secret - should be in environment variables
 const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
 
+// Fail fast if critical environment variables are missing
+if (!SUPABASE_JWT_SECRET) {
+  console.error('❌ CRITICAL: SUPABASE_JWT_SECRET is not set in environment variables');
+  console.error('Please set SUPABASE_JWT_SECRET in your .env file');
+  process.exit(1);
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -115,6 +122,12 @@ class ClaudeSession {
     try {
       // Use real path on host system
       const realPath = projectPath.startsWith('/') ? projectPath : path.join(process.cwd(), projectPath);
+      
+      // Ensure the workspace directory exists
+      if (!fs.existsSync(realPath)) {
+        console.log(`Creating workspace directory: ${realPath}`);
+        fs.mkdirSync(realPath, { recursive: true });
+      }
       
       // Create container with Claude environment
       this.container = await docker.createContainer({
@@ -315,9 +328,9 @@ function handleWebSocketConnection(ws, req) {
     switch (data.type) {
       case 'start':
         // Check if user already has an active session
-        const existingSessions = userSessions.get(userId) || [];
-        if (existingSessions.length > 0) {
-          console.log(`User ${userId} already has ${existingSessions.length} active session(s)`);
+        const existingSessions = userSessions.get(userId) || new Set();
+        if (existingSessions.size > 0) {
+          console.log(`User ${userId} already has ${existingSessions.size} active session(s)`);
           // Close existing sessions first
           for (const existingSessionId of existingSessions) {
             const existingSession = sessions.get(existingSessionId);
@@ -327,7 +340,7 @@ function handleWebSocketConnection(ws, req) {
               sessions.delete(existingSessionId);
             }
           }
-          userSessions.set(userId, []);
+          existingSessions.clear();
         }
         
         const session = new ClaudeSession(sessionId, ws, userId);
@@ -558,15 +571,26 @@ async function findAvailablePort(startPort) {
 // Start HTTP server
 async function startServers() {
   try {
-    // Find available port for HTTP server
-    const httpPort = await findAvailablePort(PORT);
+    // In production (Docker), use exact ports; in dev, scan for available ports
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    let httpPort, wsPort;
+    
+    if (isProduction) {
+      // In production, use exact ports (fail if not available)
+      httpPort = PORT;
+      wsPort = WS_PORT;
+      console.log('🚀 Starting in production mode with fixed ports');
+    } else {
+      // In development, find available ports
+      httpPort = await findAvailablePort(PORT);
+      wsPort = await findAvailablePort(WS_PORT);
+      console.log('🚀 Starting in development mode with dynamic ports');
+    }
     
     const server = app.listen(httpPort, () => {
       console.log(`✅ HTTP server running on port ${httpPort}`);
     });
-    
-    // Find available port for WebSocket server
-    const wsPort = await findAvailablePort(WS_PORT);
     
     // Create WebSocket server
     wss = new WebSocket.Server({ port: wsPort });
@@ -574,11 +598,13 @@ async function startServers() {
     
     console.log(`📡 WebSocket server running on port ${wsPort}`);
     
-    if (httpPort !== PORT) {
-      console.log(`⚠️  Port ${PORT} was taken, using ${httpPort} instead`);
-    }
-    if (wsPort !== WS_PORT) {
-      console.log(`⚠️  Port ${WS_PORT} was taken, using ${wsPort} instead`);
+    if (!isProduction) {
+      if (httpPort !== PORT) {
+        console.log(`⚠️  Port ${PORT} was taken, using ${httpPort} instead`);
+      }
+      if (wsPort !== WS_PORT) {
+        console.log(`⚠️  Port ${WS_PORT} was taken, using ${wsPort} instead`);
+      }
     }
     
     // Store config for frontend
