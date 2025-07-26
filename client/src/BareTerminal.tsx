@@ -8,7 +8,7 @@ const BareTerminal: React.FC = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const { status, send, onMessage, offMessage, connect, disconnect, error } = useWebSocket();
+  const { status, send, onMessage, offMessage, error } = useWebSocket();
   const [sessionId] = useState(() => `session-${Date.now()}`);
 
   // Initialize terminal
