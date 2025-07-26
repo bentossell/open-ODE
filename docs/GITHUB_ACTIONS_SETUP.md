@@ -15,7 +15,18 @@ Your SSH private key for accessing the droplet.
 
 To get your SSH private key:
 ```bash
-cat ~/.ssh/github-actions-deploy
+cat ~/.ssh/id_ed25519
+```
+
+**IMPORTANT**: 
+- Copy the ENTIRE key including `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----`
+- Make sure there are NO extra spaces or line breaks
+- The key should look exactly like this:
+```
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+... (multiple lines) ...
+-----END OPENSSH PRIVATE KEY-----
 ```
 
 ### 3. `SUPABASE_JWT_SECRET` (Optional)

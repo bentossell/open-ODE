@@ -1,0 +1,23 @@
+name: Test SSH Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-ssh:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Test SSH Connection
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.DROPLET_IP }}
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          echo "✅ SSH connection successful!"
+          echo "🖥️ Hostname: $(hostname)"
+          echo "📁 Current directory: $(pwd)"
+          echo "🐳 Docker version: $(docker --version)"
+          echo "📂 Application directory contents:"
+          ls -la /opt/claude-web-terminal/

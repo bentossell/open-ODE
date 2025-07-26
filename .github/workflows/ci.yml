@@ -45,18 +45,36 @@ jobs:
 
     - name: Test health endpoint
       run: |
+        # Create .env file for test
+        cat > .env << EOF
+        SUPABASE_JWT_SECRET=test-secret
+        ANTHROPIC_API_KEY=test-key
+        PORT=3000
+        WS_PORT=8081
+        SESSION_SECRET=test-session-secret
+        EOF
+        
         # Start container in background
-        docker run -d --name test-container -p 3000:3000 openode-test
+        docker run -d --name test-container -p 3000:3000 -v $(pwd)/.env:/app/.env openode-test
         
-        # Wait for startup
-        sleep 10
+        # Wait for startup with retries
+        echo "Waiting for container to start..."
+        for i in {1..30}; do
+          if curl -f http://localhost:3000/api/health 2>/dev/null; then
+            echo "Container is ready!"
+            break
+          fi
+          echo "Waiting... (attempt $i/30)"
+          sleep 2
+        done
         
-        # Test health endpoint
-        curl -f http://localhost:3000/api/health || exit 1
+        # Final test
+        curl -f http://localhost:3000/api/health || (docker logs test-container && exit 1)
         
         # Cleanup
         docker stop test-container
         docker rm test-container
+        rm -f .env
 
     - name: Build Claude environment image
       run: docker build -f Dockerfile.claude-env -t openode-claude-env .
