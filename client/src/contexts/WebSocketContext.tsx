@@ -173,15 +173,37 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const connect = useCallback(async (): Promise<void> => {
-    // Prevent multiple connections
-    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
-      console.log('WebSocket already connected or connecting');
-      return Promise.resolve();
+    // If socket is already open and authenticated, return immediately
+    if (
+      wsRef.current &&
+      wsRef.current.readyState === WebSocket.OPEN &&
+      (status === 'authenticated' || status === 'session-started')
+    ) {
+      console.log('WebSocket already authenticated');
+      return;
     }
 
-    if (status === 'connecting') {
-      console.log('WebSocket connection already in progress');
-      return Promise.resolve(); // Let the existing connection complete
+    // If a connection is in progress or open but not yet authenticated, wait
+    if (
+      (wsRef.current &&
+        (wsRef.current.readyState === WebSocket.CONNECTING ||
+          wsRef.current.readyState === WebSocket.OPEN)) ||
+      status === 'connecting'
+    ) {
+      console.log('Waiting for existing WebSocket authentication');
+      return new Promise<void>((resolve, reject) => {
+        const handler = (data: any) => {
+          if (data.type === 'auth') {
+            messageHandlersRef.current.delete(handler);
+            if (data.status === 'authenticated') {
+              resolve();
+            } else {
+              reject(new Error(data.error || 'Authentication failed'));
+            }
+          }
+        };
+        messageHandlersRef.current.add(handler);
+      });
     }
 
     setStatus('connecting');
