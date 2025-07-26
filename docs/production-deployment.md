@@ -14,7 +14,7 @@ Created `Dockerfile.claude-env` to build the Claude Code environment:
 
 Build command:
 ```bash
-docker build -f Dockerfile.claude-env -t claude-env .
+docker build -f Dockerfile.claude-env -t openode-claude-env .
 ```
 
 ### 2. WebSocket Configuration for Production

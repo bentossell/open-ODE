@@ -37,7 +37,7 @@ A web-accessible terminal interface for Claude Code that makes AI coding assista
    # Optional (defaults shown)
    PORT=3000
    WS_PORT=8081
-   DOCKER_IMAGE_NAME=claude-env
+   # Docker image name is hardcoded as 'openode-claude-env' in server.js
    DOCKER_CONTAINER_PREFIX=claude-session
    SESSION_TIMEOUT_MINUTES=30
    MAX_CONCURRENT_SESSIONS=10
@@ -67,7 +67,7 @@ A web-accessible terminal interface for Claude Code that makes AI coding assista
 | `SUPABASE_JWT_SECRET` | Yes | JWT secret from Supabase settings | - |
 | `PORT` | No | HTTP server port | 3000 |
 | `WS_PORT` | No | WebSocket server port | 8081 |
-| `DOCKER_IMAGE_NAME` | No | Name of the Claude Docker image | claude-env |
+| Docker Image | - | Image name is hardcoded in server.js | openode-claude-env |
 | `DOCKER_CONTAINER_PREFIX` | No | Prefix for Docker container names | claude-session |
 | `SESSION_TIMEOUT_MINUTES` | No | Session timeout duration | 30 |
 | `MAX_CONCURRENT_SESSIONS` | No | Maximum concurrent sessions | 10 |
@@ -142,14 +142,14 @@ A web-accessible terminal interface for Claude Code that makes AI coding assista
 ```
 Browser <--WebSocket--> Node.js Server <--Docker API--> Claude Container
    |                         |                              |
-React UI               Express + ws                   claude-env image
+React UI               Express + ws                   openode-claude-env image
 ```
 
 ## Configuration
 
 - **HTTP Port**: 3000 (change in server.js)
 - **WebSocket Port**: 8080 (change in server.js)
-- **Docker Image**: claude-env (must exist)
+- **Docker Image**: openode-claude-env (must exist)
 - **Project Path**: Set via REACT_APP_PROJECT_PATH env var
 
 ## Security Considerations
@@ -163,11 +163,11 @@ React UI               Express + ws                   claude-env image
 
 **"Connection error" in terminal:**
 - Check Docker is running: `docker ps`
-- Verify claude-env image exists: `docker images`
+- Verify openode-claude-env image exists: `docker images | grep openode-claude-env`
 - Check WebSocket port 8080 is not blocked
 
 **"Claude command not found":**
-- Rebuild claude-env image from claude-docker-setup
+- Rebuild openode-claude-env image: `docker build -f Dockerfile.claude-env -t openode-claude-env .`
 - Ensure image has Claude Code installed
 
 **Performance issues:**

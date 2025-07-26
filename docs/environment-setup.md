@@ -127,7 +127,7 @@ After setting up your environment:
 
 2. Build Docker image (if not already done):
    ```bash
-   docker build -t claude-env /path/to/claude-docker-setup
+   docker build -f Dockerfile.claude-env -t openode-claude-env .
    ```
 
 3. Start the application:

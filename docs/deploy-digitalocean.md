@@ -102,7 +102,7 @@ Copy and paste these commands one by one:
 1. **Build the Claude environment image:**
    ```bash
    cd /opt/open-ODE
-   docker build -f Dockerfile.claude-env -t claude-env .
+   docker build -f Dockerfile.claude-env -t openode-claude-env .
    ```
    
    This builds the Claude Code environment using the official `@anthropic-ai/claude-code` package.
