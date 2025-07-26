@@ -67,9 +67,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       
-      // Simple WebSocket URL logic that worked
+      // Use config port for both dev and prod to ensure consistency
       const wsUrl = isProduction 
-        ? `${wsProtocol}//${window.location.host}` 
+        ? `${wsProtocol}//${window.location.hostname}:${configRes.wsPort}` 
         : `ws://localhost:${configRes.wsPort}`;
       
       console.log('WebSocket connecting to:', wsUrl, { 
