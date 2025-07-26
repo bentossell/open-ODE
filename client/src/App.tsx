@@ -1,29 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './index.css';
 import { OpenTerminal } from './OpenTerminal';
 import { WebSocketProvider } from './contexts/WebSocketContext';
-import { supabase } from './lib/supabase';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Auth } from './components/Auth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-function App() {
-  const [session, setSession] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+function AppContent() {
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -33,11 +17,11 @@ function App() {
     );
   }
 
-  if (!session) {
+  if (!user) {
     return (
       <ErrorBoundary>
         <Auth onAuthenticated={() => {
-          // Auth state change will be handled by the listener
+          // Auth state change will be handled by AuthContext
         }} />
       </ErrorBoundary>
     );
@@ -49,6 +33,14 @@ function App() {
         <OpenTerminal />
       </WebSocketProvider>
     </ErrorBoundary>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

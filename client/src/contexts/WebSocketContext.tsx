@@ -66,12 +66,26 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // Determine WebSocket URL based on environment
       const isProduction = process.env.NODE_ENV === 'production';
-      const wsHost = process.env.REACT_APP_WS_HOST || window.location.host;
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       
-      const wsUrl = isProduction 
-        ? `${wsProtocol}//${wsHost}` 
-        : `ws://localhost:${configRes.wsPort}`;
+      let wsUrl;
+      if (isProduction) {
+        // In production, check if we have specific WebSocket configuration
+        const wsHost = process.env.REACT_APP_WS_HOST || window.location.hostname;
+        const wsPort = process.env.REACT_APP_WS_PORT;
+        
+        if (wsPort) {
+          // Explicit WebSocket port specified
+          wsUrl = `${wsProtocol}//${wsHost}:${wsPort}`;
+        } else {
+          // No explicit port - assume WebSocket is proxied through the same domain
+          // This is common in production deployments where reverse proxy handles routing
+          wsUrl = `${wsProtocol}//${wsHost}`;
+        }
+      } else {
+        // In development, always use localhost with the configured port
+        wsUrl = `ws://localhost:${configRes.wsPort}`;
+      }
       
       console.log('WebSocket connecting to:', wsUrl, { 
         isProduction, 
@@ -161,17 +175,26 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const connect = useCallback(async (): Promise<void> => {
     // Prevent multiple connections
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      console.log('WebSocket already connected');
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+      console.log('WebSocket already connected or connecting');
       return Promise.resolve();
     }
 
     if (status === 'connecting') {
       console.log('WebSocket connection already in progress');
+      // Return the existing promise if one is waiting
       return new Promise((resolve, reject) => {
-        if (connectPromiseRef.current) {
-          connectPromiseRef.current = { resolve, reject };
-        }
+        const checkStatus = () => {
+          if (status === 'authenticated') {
+            resolve();
+          } else if (status === 'error' || status === 'disconnected') {
+            reject(new Error('Connection failed'));
+          } else {
+            // Still connecting, check again in 100ms
+            setTimeout(checkStatus, 100);
+          }
+        };
+        checkStatus();
       });
     }
 

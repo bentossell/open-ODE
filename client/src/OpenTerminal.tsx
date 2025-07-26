@@ -4,7 +4,7 @@ import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
 import { useWebSocket } from './contexts/WebSocketContext';
-import { supabase } from './lib/supabase';
+import { useAuth } from './contexts/AuthContext';
 import { 
   Home, 
   Plus, 
@@ -22,6 +22,7 @@ import {
 
 export const OpenTerminal: React.FC = () => {
   const { status, send, onMessage, offMessage, connect, disconnect } = useWebSocket();
+  const { signOut } = useAuth();
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -132,14 +133,7 @@ export const OpenTerminal: React.FC = () => {
     };
   }, [send, sessionStarted]);
 
-  // Connect WebSocket on mount
-  useEffect(() => {
-    if (status === 'disconnected') {
-      connect().catch(err => {
-        console.error('Failed to connect WebSocket:', err);
-      });
-    }
-  }, []); // Empty dependency array - only run once on mount
+  // WebSocket connection is now manual - user clicks "Start Session" to connect
 
   // Handle WebSocket messages
   useEffect(() => {
@@ -164,20 +158,41 @@ export const OpenTerminal: React.FC = () => {
     
     xtermRef.current?.writeln('\r\n🔄 Starting session...\r\n');
     
-    if (status === 'disconnected') {
-      await connect();
-    } else if (status === 'authenticated') {
-      send({ type: 'start' });
+    try {
+      // Always ensure we're connected before starting
+      if (status === 'disconnected' || status === 'error') {
+        xtermRef.current?.writeln('🔗 Connecting to server...\r\n');
+        await connect();
+      }
+      
+      // Once connected and authenticated, start the session
+      if (status === 'authenticated') {
+        xtermRef.current?.writeln('🚀 Starting Claude session...\r\n');
+        send({ type: 'start' });
+      }
+    } catch (error) {
+      console.error('Failed to start session:', error);
+      xtermRef.current?.writeln(`\r\n❌ Failed to start session: ${error}\r\n`);
     }
   };
 
   const handleSignOut = async () => {
     try {
+      // Disconnect WebSocket first
       disconnect();
+      
+      // Clear terminal
       if (xtermRef.current) {
         xtermRef.current.clear();
       }
-      await supabase.auth.signOut();
+      
+      // Sign out using AuthContext
+      const { error } = await signOut();
+      if (error) {
+        console.error('Error during sign out:', error);
+        // Force reload if sign out fails
+        window.location.reload();
+      }
     } catch (error) {
       console.error('Error during sign out:', error);
       window.location.reload();
