@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
-import { XTerminal } from './XTerminal';
+import { OpenTerminal } from './OpenTerminal';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { supabase } from './lib/supabase';
 import { Auth } from './components/Auth';
@@ -27,8 +27,8 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg">Loading...</div>
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-lg text-gray-600">Loading...</div>
       </div>
     );
   }
@@ -46,7 +46,7 @@ function App() {
   return (
     <ErrorBoundary>
       <WebSocketProvider>
-        <XTerminal />
+        <OpenTerminal />
       </WebSocketProvider>
     </ErrorBoundary>
   );

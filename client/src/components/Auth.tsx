@@ -76,7 +76,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated }) => {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-title">Welcome to Open ODE</h1>
+        <h1 className="auth-title">Welcome to OpenODE</h1>
         <p className="auth-subtitle">
           {mode === 'signin' && 'Sign in to access your development environment'}
           {mode === 'signup' && 'Create an account to get started'}
