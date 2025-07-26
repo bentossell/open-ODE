@@ -284,6 +284,12 @@ function handleWebSocketConnection(ws, req) {
   let sessionId = null;
   let userId = null;
   let authenticated = false;
+  
+  // Set up ping/pong to keep connection alive
+  ws.isAlive = true;
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
 
   ws.on('message', async (message) => {
     const data = JSON.parse(message);
@@ -547,7 +553,6 @@ app.get('*', (req, res) => {
 });
 
 const PORT = parseInt(process.env.PORT) || 3000;
-const WS_PORT = parseInt(process.env.WS_PORT) || 8081;
 
 // Function to find available port
 async function findAvailablePort(startPort) {
@@ -568,6 +573,9 @@ async function findAvailablePort(startPort) {
   });
 }
 
+// WebSocket keepalive interval
+let keepaliveInterval;
+
 // Start HTTP server
 async function startServers() {
   try {
@@ -586,9 +594,13 @@ async function startServers() {
       console.log('🚀 Starting in development mode with dynamic port');
     }
     
-    const server = app.listen(httpPort, () => {
+    const server = app.listen(httpPort, '0.0.0.0', () => {
       console.log(`✅ HTTP server running on port ${httpPort}`);
     });
+    
+    // Set keepalive timeout for Cloudflare (65 seconds)
+    server.keepAliveTimeout = 65000;
+    server.headersTimeout = 66000;
     
     // Create WebSocket server on the same port using HTTP upgrade
     wss = new WebSocket.Server({ noServer: true });
@@ -609,6 +621,19 @@ async function startServers() {
     // Use existing connection handler
     wss.on('connection', (ws, req) => handleWebSocketConnection(ws, req));
     
+    // Set up periodic ping to keep connections alive
+    keepaliveInterval = setInterval(() => {
+      wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) {
+          console.log('Terminating dead WebSocket connection');
+          return ws.terminate();
+        }
+        
+        ws.isAlive = false;
+        ws.ping();
+      });
+    }, 30000); // Ping every 30 seconds
+    
     console.log(`📡 WebSocket server listening on ${httpPort}/ws`);
     
     if (!isProduction && httpPort !== PORT) {
@@ -628,5 +653,14 @@ async function startServers() {
     process.exit(1);
   }
 }
+
+// Clean up on exit
+process.on('SIGINT', () => {
+  console.log('\nShutting down gracefully...');
+  if (keepaliveInterval) {
+    clearInterval(keepaliveInterval);
+  }
+  process.exit(0);
+});
 
 startServers();
