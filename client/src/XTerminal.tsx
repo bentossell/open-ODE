@@ -9,7 +9,7 @@ import { supabase } from './lib/supabase';
 import { Plus } from 'lucide-react';
 
 export const XTerminal: React.FC = () => {
-  const { status, send, onMessage, offMessage, connect, disconnect } = useWebSocket();
+  const { status, send, onMessage, offMessage, connect, disconnect, error } = useWebSocket();
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -33,6 +33,11 @@ export const XTerminal: React.FC = () => {
     
     xtermRef.current = term;
     fitAddonRef.current = fitAddon;
+
+    // Show initial welcome message
+    term.writeln('Welcome to OpenODE!');
+    term.writeln('Click "New Session" to start coding with Claude.');
+    term.writeln('');
 
     // Handle terminal input
     term.onData((data) => {
@@ -80,20 +85,55 @@ export const XTerminal: React.FC = () => {
     return () => offMessage(handleMessage);
   }, [onMessage, offMessage]);
 
-  const startSession = async () => {
-    if (status === 'session-started') return;
+  const startSession = async (event?: React.MouseEvent) => {
+    console.log('🚀 Start session clicked', { 
+      status, 
+      sessionStarted,
+      isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+      touchDevice: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+      timestamp: new Date().toISOString()
+    });
+
+    // Prevent event propagation and default behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (status === 'session-started') {
+      console.log('⚠️ Session already started, skipping');
+      return;
+    }
 
     try {
+      console.log('📡 Current WebSocket status:', status);
+      
+      // Write to terminal regardless of connection status
+      xtermRef.current?.writeln('\r\n🔄 Attempting to start session...\r\n');
+      
+      // Make sure we're connected first
       if (status !== 'authenticated') {
+        console.log('🔌 Connecting WebSocket first...');
+        xtermRef.current?.writeln('🔌 Connecting to server...\r\n');
         await connect();
+        console.log('✅ WebSocket connection attempt completed');
       }
+      
+      console.log('📤 Sending start command...');
+      xtermRef.current?.writeln('🚀 Starting Claude session...\r\n');
+      
+      // Send the start command
       send({ type: 'start' });
+      
+      console.log('✅ Start command sent successfully');
+      
     } catch (err) {
-      console.error('Failed to start session:', err);
-      xtermRef.current?.writeln(`\r\n❌ Failed to start session: ${err instanceof Error ? err.message : 'Unknown error'}\r\n`);
+      console.error('❌ Failed to start session:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      xtermRef.current?.writeln(`\r\n❌ Failed to start session: ${errorMessage}\r\n`);
+      xtermRef.current?.writeln('Please try refreshing the page or check your connection.\r\n');
     }
   };
-
 
   const handleSignOut = async () => {
     try {
@@ -117,25 +157,60 @@ export const XTerminal: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Left Sidebar */}
-      <div className="w-64 border-r border-border bg-card">
+    <div className="flex flex-col md:flex-row h-screen bg-background">
+      {/* Sidebar - Top on mobile, left on desktop */}
+      <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-border bg-card">
         <div className="p-4">
           <div className="mb-6">
             <h1 className="text-xl font-bold mb-2">OpenODE</h1>
             <Button 
               variant="outline" 
-              size="sm" 
-              className="w-full justify-start gap-2"
+              size="lg" 
+              className="w-full justify-start gap-2 text-base font-medium"
               onClick={startSession}
               disabled={sessionStarted}
+              onTouchStart={() => console.log('Button touched')}
+              onTouchEnd={() => console.log('Button touch ended')}
+              style={{ 
+                minHeight: '48px',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+                cursor: 'pointer'
+              }}
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-5 w-5" />
               {sessionStarted ? 'Session Active' : 'New Session'}
             </Button>
+            
+            {/* Mobile Debug Info */}
+            <div className="mt-4 md:hidden text-xs text-muted-foreground space-y-1">
+              <div>Status: {status}</div>
+              {error && <div className="text-red-500">Error: {error}</div>}
+              <div>Touch: {'ontouchstart' in window ? 'Yes' : 'No'}</div>
+              <div>Mobile: {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Yes' : 'No'}</div>
+            </div>
+            
+            {/* Alternative Start Button for Mobile Debugging */}
+            {!sessionStarted && (
+              <Button 
+                variant="default" 
+                size="lg" 
+                className="w-full mt-2 md:hidden"
+                onClick={(e) => {
+                  console.log('Alternative button clicked');
+                  startSession(e);
+                }}
+                style={{ 
+                  minHeight: '48px',
+                  touchAction: 'manipulation'
+                }}
+              >
+                🚀 Start Session (Alt)
+              </Button>
+            )}
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-4 hidden md:block">
             <div>
               <h3 className="text-xs font-medium text-muted-foreground mb-2">WORKSPACE</h3>
               <div className="space-y-1">
@@ -165,6 +240,21 @@ export const XTerminal: React.FC = () => {
                  status === 'error' ? '🔴 Error' :
                  '⚪ Disconnected'}
               </Badge>
+              {/* Mobile Quick Start Button */}
+              {!sessionStarted && (
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="md:hidden"
+                  onClick={startSession}
+                  style={{ 
+                    minHeight: '40px',
+                    touchAction: 'manipulation'
+                  }}
+                >
+                  Start
+                </Button>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
@@ -176,7 +266,6 @@ export const XTerminal: React.FC = () => {
 
         {/* Terminal Area */}
         <div className="flex-1 p-4">
-          {/* Render the terminal with **no** additional styling so that nothing interferes with xterm's defaults */}
           <div className="h-full overflow-hidden">
             <div ref={terminalRef} className="h-full" />
           </div>
