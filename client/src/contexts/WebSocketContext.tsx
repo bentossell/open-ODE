@@ -28,10 +28,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [status, setStatus] = useState<WebSocketStatus>('disconnected');
   const [error, setError] = useState<string | null>(null);
   const messageHandlersRef = useRef<Set<(data: any) => void>>(new Set());
-  const connectPromiseRef = useRef<{
-    resolve: () => void;
-    reject: (error: Error) => void;
-  } | null>(null);
   const retryCountRef = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const maxRetries = 5;
@@ -64,28 +60,17 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error('No authentication token found');
       }
 
-      // Determine WebSocket URL based on environment
-      const isProduction = process.env.NODE_ENV === 'production';
+      // Determine if we're in production based on the hostname
+      const isProduction = window.location.hostname === 'openode.ai' || 
+                          window.location.hostname === 'www.openode.ai' ||
+                          window.location.hostname.includes('digitalocean');
+      
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       
-      let wsUrl: string;
-      if (isProduction) {
-        // In production, check if we have specific WebSocket configuration
-        const wsHost = process.env.REACT_APP_WS_HOST || window.location.hostname;
-        const wsPort = process.env.REACT_APP_WS_PORT;
-        
-        if (wsPort) {
-          // Explicit WebSocket port specified
-          wsUrl = `${wsProtocol}//${wsHost}:${wsPort}`;
-        } else {
-          // No explicit port - assume WebSocket is proxied through the same domain
-          // This is common in production deployments where reverse proxy handles routing
-          wsUrl = `${wsProtocol}//${wsHost}`;
-        }
-      } else {
-        // In development, always use localhost with the configured port
-        wsUrl = `ws://localhost:${configRes.wsPort}`;
-      }
+      // Simple WebSocket URL logic that worked
+      const wsUrl = isProduction 
+        ? `${wsProtocol}//${window.location.host}` 
+        : `ws://localhost:${configRes.wsPort}`;
       
       console.log('WebSocket connecting to:', wsUrl, { 
         isProduction, 
@@ -107,6 +92,13 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         ws.onopen = () => {
           console.log('WebSocket connected, sending auth...');
           retryCountRef.current = 0; // Reset retry count on successful connection
+          
+          // Set a timeout to warn if auth doesn't complete
+          const authTimeout = setTimeout(() => {
+            console.warn('⚠️ WebSocket auth is taking longer than expected (5s)');
+            setError('Authentication timeout - please refresh the page');
+          }, 5000);
+          
           ws.send(JSON.stringify({
             type: 'auth',
             token: session.access_token,
@@ -115,6 +107,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               email: session.user.email
             }
           }));
+          
+          // Store timeout to clear it on auth success
+          (ws as any).authTimeout = authTimeout;
         };
 
         ws.onmessage = (event) => {
@@ -122,7 +117,13 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           
           // Handle authentication response
           if (data.type === 'auth') {
+            // Clear auth timeout
+            if ((ws as any).authTimeout) {
+              clearTimeout((ws as any).authTimeout);
+            }
+            
             if (data.status === 'authenticated') {
+              console.log('✅ WebSocket authenticated successfully');
               setStatus('authenticated');
               cleanup();
               resolve();
@@ -149,19 +150,29 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           messageHandlersRef.current.forEach(handler => handler(data));
         };
 
-        ws.onerror = () => {
-          const error = new Error('WebSocket connection error');
+        ws.onerror = (event) => {
+          console.error('❌ WebSocket error:', event);
+          const error = new Error('WebSocket connection error - check console for details');
           setError(error.message);
           setStatus('error');
           cleanup();
           reject(error);
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
+          console.warn('WebSocket closed:', { code: event.code, reason: event.reason });
           setStatus('disconnected');
           wsRef.current = null;
           cleanup();
-          reject(new Error('WebSocket closed unexpectedly'));
+          
+          // Clear auth timeout if still active
+          if ((ws as any).authTimeout) {
+            clearTimeout((ws as any).authTimeout);
+          }
+          
+          const errorMsg = event.reason || `WebSocket closed unexpectedly (code: ${event.code})`;
+          setError(errorMsg);
+          reject(new Error(errorMsg));
         };
       });
 
@@ -182,48 +193,39 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (status === 'connecting') {
       console.log('WebSocket connection already in progress');
-      // Wait for existing connection attempt to complete
-      if (connectPromiseRef.current) {
-        return new Promise((resolve, reject) => {
-          if (connectPromiseRef.current) {
-            connectPromiseRef.current = { resolve, reject };
-          }
-        });
-      }
+      return Promise.resolve(); // Let the existing connection complete
     }
 
     setStatus('connecting');
     setError(null);
+    retryCountRef.current = 0;
 
-    return new Promise(async (resolve, reject) => {
-      connectPromiseRef.current = { resolve, reject };
-
-      const tryConnect = async (): Promise<void> => {
+    try {
+      await attemptConnection();
+    } catch (error) {
+      console.error('Initial connection failed:', error);
+      
+      // Simple retry logic
+      for (let i = 0; i < maxRetries; i++) {
+        retryCountRef.current = i + 1;
+        const delay = baseDelay * Math.pow(2, i);
+        console.log(`Retrying in ${delay}ms (attempt ${i + 1}/${maxRetries})`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
         try {
           await attemptConnection();
-          connectPromiseRef.current?.resolve();
-          connectPromiseRef.current = null;
-        } catch (error) {
-          console.error(`Connection attempt ${retryCountRef.current + 1} failed:`, error);
-          
-          if (retryCountRef.current < maxRetries) {
-            retryCountRef.current++;
-            const delay = baseDelay * Math.pow(2, retryCountRef.current - 1);
-            console.log(`Retrying in ${delay}ms (attempt ${retryCountRef.current}/${maxRetries})`);
-            
-            retryTimeoutRef.current = setTimeout(tryConnect, delay);
-          } else {
+          return; // Success!
+        } catch (retryError) {
+          console.error(`Retry ${i + 1} failed:`, retryError);
+          if (i === maxRetries - 1) {
             setError(`Failed to connect after ${maxRetries} attempts`);
             setStatus('error');
-            const errorObj = error instanceof Error ? error : new Error('Connection failed');
-            connectPromiseRef.current?.reject(errorObj);
-            connectPromiseRef.current = null;
+            throw retryError;
           }
         }
-      };
-
-      tryConnect();
-    });
+      }
+    }
   }, [status, attemptConnection]);
 
   const send = useCallback((data: any) => {
