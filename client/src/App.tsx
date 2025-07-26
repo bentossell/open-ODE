@@ -1,12 +1,17 @@
 import React from 'react';
 import './index.css';
-import { OpenTerminal } from './OpenTerminal';
+// import { OpenTerminal } from './OpenTerminal';
+import BareTerminal from './BareTerminal';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Auth } from './components/Auth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function AppContent() {
+  // TEMPORARY: Skip auth and WebSocket, go straight to BareTerminal
+  return <BareTerminal />;
+  
+  /*
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -34,13 +39,18 @@ function AppContent() {
       </WebSocketProvider>
     </ErrorBoundary>
   );
+  */
 }
 
 function App() {
   return (
+    // TEMPORARY: Skip AuthProvider wrapper
+    <AppContent />
+    /*
     <AuthProvider>
       <AppContent />
     </AuthProvider>
+    */
   );
 }
 
