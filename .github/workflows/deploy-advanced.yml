@@ -1,0 +1,107 @@
+name: Advanced Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      deploy_message:
+        description: 'Deployment message'
+        required: false
+        default: 'Manual deployment triggered'
+
+env:
+  DROPLET_IP: 167.71.89.150
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup deployment timestamp
+      run: echo "DEPLOY_TIME=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+
+    - name: Deploy to DigitalOcean Droplet
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.DROPLET_IP }}
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          set -e
+          
+          echo "🚀 Starting deployment at ${{ env.DEPLOY_TIME }}"
+          echo "📝 Deployment message: ${{ github.event.inputs.deploy_message || 'Automated deployment from push to main' }}"
+          
+          # Navigate to the application directory
+          cd /opt/claude-web-terminal
+          
+          # Backup current .env files
+          cp .env .env.backup.$(date +%Y%m%d_%H%M%S) || true
+          cp client/.env client/.env.backup.$(date +%Y%m%d_%H%M%S) || true
+          
+          # Stash any local changes
+          git stash || true
+          
+          # Pull latest changes
+          echo "📥 Pulling latest changes..."
+          git pull origin main
+          
+          # Restore .env files (they shouldn't be in git)
+          if [ -f .env.backup.* ]; then
+            cp $(ls -t .env.backup.* | head -1) .env
+          fi
+          if [ -f client/.env.backup.* ]; then
+            cp $(ls -t client/.env.backup.* | head -1) client/.env
+          fi
+          
+          # Update environment variables if provided
+          if [ -n "${{ secrets.SUPABASE_JWT_SECRET }}" ]; then
+            sed -i "s/SUPABASE_JWT_SECRET=.*/SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}/" .env
+          fi
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+            sed -i "s/ANTHROPIC_API_KEY=.*/ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}/" .env
+          fi
+          
+          # Rebuild and restart containers
+          echo "🐳 Rebuilding Docker containers..."
+          docker compose down
+          docker compose up -d --build
+          
+          # Wait for services to start
+          echo "⏳ Waiting for services to start..."
+          sleep 10
+          
+          # Health check
+          echo "🏥 Running health check..."
+          curl -f http://localhost:3000/api/health || exit 1
+          
+          # Show deployment status
+          echo "✅ Deployment complete!"
+          echo "📊 Running containers:"
+          docker ps
+          
+          echo "📋 Application logs:"
+          docker logs openode-node --tail 20
+          
+          # Cleanup old backups (keep last 5)
+          ls -t .env.backup.* 2>/dev/null | tail -n +6 | xargs rm -f || true
+          ls -t client/.env.backup.* 2>/dev/null | tail -n +6 | xargs rm -f || true
+
+    - name: Send deployment notification
+      if: always()
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.DROPLET_IP }}
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment successful at ${{ env.DEPLOY_TIME }}"
+          else
+            echo "❌ Deployment failed at ${{ env.DEPLOY_TIME }}"
+            docker logs openode-node --tail 50
+          fi

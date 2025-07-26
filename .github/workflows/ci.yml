@@ -1,0 +1,62 @@
+name: CI - Build and Test
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install backend dependencies
+      run: npm ci
+
+    - name: Install frontend dependencies
+      working-directory: ./client
+      run: npm ci
+
+    - name: Run backend linter
+      run: npm run lint || echo "No lint script found"
+      continue-on-error: true
+
+    - name: Run frontend linter
+      working-directory: ./client
+      run: npm run lint || echo "No lint script found"
+      continue-on-error: true
+
+    - name: Build frontend
+      working-directory: ./client
+      run: npm run build
+
+    - name: Build Docker image
+      run: docker build -t openode-test .
+
+    - name: Test health endpoint
+      run: |
+        # Start container in background
+        docker run -d --name test-container -p 3000:3000 openode-test
+        
+        # Wait for startup
+        sleep 10
+        
+        # Test health endpoint
+        curl -f http://localhost:3000/api/health || exit 1
+        
+        # Cleanup
+        docker stop test-container
+        docker rm test-container
+
+    - name: Build Claude environment image
+      run: docker build -f Dockerfile.claude-env -t openode-claude-env .

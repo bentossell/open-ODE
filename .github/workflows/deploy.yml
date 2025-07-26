@@ -1,0 +1,37 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to DigitalOcean Droplet
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.DROPLET_IP }}
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          # Navigate to the application directory
+          cd /opt/claude-web-terminal
+          
+          # Pull latest changes
+          git pull origin main
+          
+          # Rebuild and restart containers
+          docker compose down
+          docker compose up -d --build
+          
+          # Show deployment status
+          echo "🚀 Deployment complete!"
+          docker ps
+          echo "📋 Container logs:"
+          docker logs openode-node --tail 10
