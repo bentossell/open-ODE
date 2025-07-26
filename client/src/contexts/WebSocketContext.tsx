@@ -198,7 +198,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           } else {
             setError(`Failed to connect after ${maxRetries} attempts`);
             setStatus('error');
-            connectPromiseRef.current?.reject(error);
+            const errorObj = error instanceof Error ? error : new Error('Connection failed');
+            connectPromiseRef.current?.reject(errorObj);
             connectPromiseRef.current = null;
           }
         }
