@@ -129,6 +129,14 @@ class ClaudeSession {
         fs.mkdirSync(realPath, { recursive: true });
       }
       
+      // Check if API key is available
+      if (!process.env.ANTHROPIC_API_KEY) {
+        console.warn('⚠️  ANTHROPIC_API_KEY not found in environment variables');
+        console.warn('Claude Code will require authentication through the web interface');
+      } else {
+        console.log('✅ ANTHROPIC_API_KEY found, length:', process.env.ANTHROPIC_API_KEY.length);
+      }
+      
       // Create container with Claude environment
       this.container = await docker.createContainer({
         Image: 'openode-claude-env',
@@ -139,7 +147,7 @@ class ClaudeSession {
         User: 'claude-user',
         WorkingDir: '/home/claude-user/workspace',
         Env: [
-          `ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY}`,
+          `ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY || ''}`,
           'CLAUDE_USE_API_KEY=true',  // Force API key mode
           'CLAUDE_DISABLE_TELEMETRY=true',
           'CLAUDE_TRUST_WORKSPACE=true',
@@ -185,15 +193,39 @@ class ClaudeSession {
         console.log('Claude binary location:', checkOutput.trim());
       } catch (err) {
         console.error('Failed to find claude binary:', err);
-        throw new Error('Claude binary not found in container');
+        console.log('Trying to find claude in npm global packages...');
+        
+        // Try to find the actual claude command path
+        try {
+          const npmCheckResult = await docker.getContainer(containerId).exec({
+            Cmd: ['bash', '-c', 'npm list -g --depth=0 | grep claude || echo "Claude not found in npm global"'],
+            AttachStdout: true,
+            AttachStderr: true
+          });
+          
+          const npmCheckStream = await npmCheckResult.start();
+          const npmCheckOutput = await new Promise((resolve) => {
+            let output = '';
+            npmCheckStream.on('data', (chunk) => {
+              output += chunk.toString();
+            });
+            npmCheckStream.on('end', () => resolve(output));
+          });
+          
+          console.log('NPM global packages check:', npmCheckOutput.trim());
+        } catch (npmErr) {
+          console.error('NPM check failed:', npmErr);
+        }
       }
       
       // Create PTY process that runs docker exec
+      // Use npx to run claude-code since direct command might not be available
       this.ptyProcess = pty.spawn('docker', [
         'exec',
         '-it',
         containerId,
-        'claude'
+        'npx',
+        '@anthropic-ai/claude-code'
       ], {
         name: 'xterm-color',
         cols: 80,
@@ -206,12 +238,20 @@ class ClaudeSession {
         }
       });
 
-      console.log('PTY process created');
+      console.log('PTY process created, PID:', this.ptyProcess?.pid);
       
       // Check if PTY process is valid
-      if (!this.ptyProcess) {
-        console.error('PTY process creation failed');
+      if (!this.ptyProcess || !this.ptyProcess.pid) {
+        console.error('PTY process creation failed - no PID');
         throw new Error('Failed to create PTY process');
+      }
+
+      // Add a startup message
+      if (this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({
+          type: 'output',
+          data: '\r\n🚀 Initializing Claude Code session...\r\n'
+        }));
       }
 
       // Handle PTY output

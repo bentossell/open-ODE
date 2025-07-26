@@ -34,7 +34,9 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # Install Claude Code CLI globally
-RUN npm install -g @anthropic-ai/claude-code
+RUN npm install -g @anthropic-ai/claude-code && \
+    # Ensure claude command is available in PATH
+    ln -sf /usr/local/bin/claude /usr/bin/claude || true
 
 # Create a non-root user for running sessions
 RUN useradd -m -s /bin/bash -u 1000 claude-user && \
