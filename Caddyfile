@@ -1,10 +1,10 @@
 {
 	# Global options
-	email support@opencode.ai
+	email support@openode.ai
 }
 
 # Production domain
-opencode.ai {
+openode.ai {
 	encode gzip
 
 	# WebSocket proxy – let Caddy handle the headers
@@ -28,8 +28,8 @@ opencode.ai {
 }
 
 # WWW redirect
-www.opencode.ai {
-	redir https://opencode.ai{uri} permanent
+www.openode.ai {
+	redir https://openode.ai{uri} permanent
 }
 
 # IP address access (for direct access)
@@ -45,7 +45,7 @@ http://167.71.89.150, 167.71.89.150 {
 }
 
 # Staging domain (for testing)
-staging.opencode.ai {
+staging.openode.ai {
 	encode gzip
 
 	# Same configuration as production

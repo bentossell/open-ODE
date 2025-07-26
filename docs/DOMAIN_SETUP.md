@@ -1,4 +1,4 @@
-# Domain Setup Guide for opencode.ai
+# Domain Setup Guide for openode.ai
 
 ## DNS Configuration
 
@@ -13,14 +13,14 @@ CNAME   staging 167.71.89.150       300
 
 ## What's Configured
 
-1. **Main Domain**: `opencode.ai`
+1. **Main Domain**: `openode.ai`
    - Automatically gets HTTPS via Let's Encrypt
    - Handles both HTTP and WebSocket traffic
 
-2. **WWW Redirect**: `www.opencode.ai`
-   - Permanently redirects to `opencode.ai`
+2. **WWW Redirect**: `www.openode.ai`
+   - Permanently redirects to `openode.ai`
 
-3. **Staging Environment**: `staging.opencode.ai`
+3. **Staging Environment**: `staging.openode.ai`
    - For testing new features before production
 
 4. **Direct IP Access**: `http://167.71.89.150`
@@ -29,24 +29,24 @@ CNAME   staging 167.71.89.150       300
 ## Automatic HTTPS
 
 Caddy automatically obtains and renews SSL certificates from Let's Encrypt for:
-- opencode.ai
-- www.opencode.ai
-- staging.opencode.ai
+- openode.ai
+- www.openode.ai
+- staging.openode.ai
 
 No manual certificate management needed!
 
 ## WebSocket Support
 
 The application uses WebSocket connections for real-time terminal communication. These are automatically handled at:
-- `wss://opencode.ai/ws` (production)
+- `wss://openode.ai/ws` (production)
 - `ws://167.71.89.150/ws` (direct IP, no SSL)
 
 ## Testing Your Domain
 
 Once DNS propagates (5-30 minutes), test:
 
-1. **Main site**: https://opencode.ai
-2. **WWW redirect**: https://www.opencode.ai (should redirect)
+1. **Main site**: https://openode.ai
+2. **WWW redirect**: https://www.openode.ai (should redirect)
 3. **WebSocket**: Open the app and start a terminal session
 4. **SSL Certificate**: Check the padlock icon in your browser
 
@@ -56,8 +56,8 @@ If the domain doesn't work:
 
 1. **Check DNS propagation**:
    ```bash
-   dig opencode.ai
-   nslookup opencode.ai
+   dig openode.ai
+   nslookup openode.ai
    ```
 
 2. **Check Caddy logs on server**:
