@@ -168,7 +168,7 @@ class ClaudeSession {
       // First check if claude binary exists in container
       try {
         const checkResult = await docker.getContainer(containerId).exec({
-          Cmd: ['which', 'claude'],
+          Cmd: ['which', 'claude-code'],
           AttachStdout: true,
           AttachStderr: true
         });
@@ -184,8 +184,8 @@ class ClaudeSession {
         
         console.log('Claude binary location:', checkOutput.trim());
       } catch (err) {
-        console.error('Failed to find claude binary:', err);
-        throw new Error('Claude binary not found in container');
+        console.error('Failed to find claude-code binary:', err);
+        throw new Error('Claude Code binary not found in container');
       }
       
       // Create PTY process that runs docker exec
@@ -193,7 +193,7 @@ class ClaudeSession {
         'exec',
         '-it',
         containerId,
-        'claude'
+        'claude-code'
       ], {
         name: 'xterm-color',
         cols: 80,
