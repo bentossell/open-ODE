@@ -4,6 +4,7 @@ import { XTerminal } from './XTerminal';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { supabase } from './lib/supabase';
 import { Auth } from './components/Auth';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   const [session, setSession] = useState<any>(null);
@@ -33,15 +34,21 @@ function App() {
   }
 
   if (!session) {
-    return <Auth onAuthenticated={() => {
-      // Auth state change will be handled by the listener
-    }} />;
+    return (
+      <ErrorBoundary>
+        <Auth onAuthenticated={() => {
+          // Auth state change will be handled by the listener
+        }} />
+      </ErrorBoundary>
+    );
   }
 
   return (
-    <WebSocketProvider>
-      <XTerminal />
-    </WebSocketProvider>
+    <ErrorBoundary>
+      <WebSocketProvider>
+        <XTerminal />
+      </WebSocketProvider>
+    </ErrorBoundary>
   );
 }
 
