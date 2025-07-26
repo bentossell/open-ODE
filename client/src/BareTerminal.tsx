@@ -64,6 +64,9 @@ const BareTerminal: React.FC = () => {
         xtermRef.current.write(data.data);
       } else if (data.type === 'status') {
         console.log('Session status:', data.status);
+        if (data.status === 'started' && xtermRef.current) {
+          xtermRef.current.writeln('\r\n\x1b[32mClaude session started!\x1b[0m\r\n');
+        }
       } else if (data.type === 'error') {
         console.error('Session error:', data.error);
         if (xtermRef.current) {
@@ -125,6 +128,9 @@ const BareTerminal: React.FC = () => {
   useEffect(() => {
     if (status === 'authenticated') {
       console.log('Starting terminal session...');
+      if (xtermRef.current) {
+        xtermRef.current.writeln('Starting Claude session...');
+      }
       send({
         type: 'start',
         sessionId: sessionId
