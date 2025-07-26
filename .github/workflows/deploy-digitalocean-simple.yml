@@ -1,0 +1,74 @@
+name: Deploy to DigitalOcean (Simple)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DO_SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H ${{ secrets.DO_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to DigitalOcean
+      run: |
+        ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.DO_USERNAME }}@${{ secrets.DO_HOST }} 'bash -s' << 'EOF'
+          set -e
+          echo "Starting deployment..."
+          
+          # Navigate to project directory
+          cd /opt/open-ODE
+          
+          # Pull latest changes
+          echo "Pulling latest changes..."
+          git pull origin main
+          
+          # Install dependencies
+          echo "Installing dependencies..."
+          npm ci
+          cd client && npm ci && cd ..
+          
+          # Build the client
+          echo "Building client..."
+          cd client && npm run build && cd ..
+          
+          # Build Docker image
+          echo "Building Docker image..."
+          docker build -t openode-app .
+          
+          # Stop existing container
+          echo "Stopping existing container..."
+          docker stop openode-container || true
+          docker rm openode-container || true
+          
+          # Run new container
+          echo "Starting new container..."
+          docker run -d \
+            --name openode-container \
+            --restart unless-stopped \
+            -p 3000:3000 \
+            -p 8081:8081 \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            --env-file .env \
+            openode-app
+          
+          # Clean up old images
+          echo "Cleaning up..."
+          docker image prune -f
+          
+          # Verify deployment
+          echo "Verifying deployment..."
+          docker ps | grep openode-container
+          
+          echo "Deployment complete!"
+        EOF

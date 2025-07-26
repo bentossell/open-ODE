@@ -1,0 +1,100 @@
+name: Deploy to Environment
+
+on:
+  push:
+    branches:
+      - dev
+      - staging
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install backend dependencies
+        run: npm ci
+        
+      - name: Install frontend dependencies
+        run: cd client && npm ci
+        
+      - name: Build frontend
+        run: cd client && npm run build
+        
+      - name: Run tests
+        run: npm test
+        continue-on-error: true
+        
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: |
+            server.js
+            package*.json
+            client/build
+            deploy/
+            
+  deploy-dev:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' || github.event.inputs.environment == 'dev'
+    environment: development
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          
+      - name: Deploy to Dev
+        run: |
+          echo "Deploying to development environment..."
+          # Add deployment commands here (e.g., Docker push, SSH deploy, etc.)
+          
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging' || github.event.inputs.environment == 'staging'
+    environment: staging
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          
+      - name: Deploy to Staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add deployment commands here
+          
+  deploy-prod:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod'
+    environment: production
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          
+      - name: Deploy to Production
+        run: |
+          echo "Deploying to production environment..."
+          # Add deployment commands here

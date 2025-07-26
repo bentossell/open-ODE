@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
-# Install Docker CLI
-RUN apk add --no-cache docker-cli
+# Install dependencies for node-pty and Docker CLI
+RUN apk add --no-cache python3 make g++ bash docker-cli
 
 WORKDIR /app
 
@@ -9,18 +9,22 @@ WORKDIR /app
 COPY package*.json ./
 COPY client/package*.json ./client/
 
-# Install dependencies
-RUN npm install
-RUN cd client && npm install
+# Install all dependencies (needed for build)
+RUN npm ci
+RUN cd client && npm ci
 
-# Copy source code
+# Copy all source files
 COPY . .
 
-# Build React app
-RUN npm run build
+# Build the client
+RUN cd client && npm run build
+
+# Create non-root user (but don't switch to it for Docker socket access)
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
 
 # Expose ports
 EXPOSE 3000 8081
 
 # Start the server
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
