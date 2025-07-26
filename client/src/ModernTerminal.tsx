@@ -101,13 +101,21 @@ const ModernTerminal: React.FC = () => {
   }, [onMessage, offMessage]);
 
   const startSession = async () => {
-    console.log('Starting session, current status:', status);
-    if (status === 'authenticated') {
-      console.log('Sending start command');
+    // Prevent duplicate starts
+    if (status === 'session-started') return;
+
+    try {
+      // Ensure we are connected & authenticated first
+      if (status !== 'authenticated') {
+        console.log('🔗 Establishing WebSocket connection…');
+        await connect();
+      }
+
+      // At this point the socket should be authenticated
+      console.log('🚀 Sending start command');
       send({ type: 'start' });
-    } else {
-      console.log('Not authenticated, connecting first');
-      await connect();
+    } catch (err) {
+      console.error('Failed to start session:', err);
     }
   };
 

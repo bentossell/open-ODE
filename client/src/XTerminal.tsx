@@ -116,10 +116,16 @@ export const XTerminal: React.FC = () => {
   }, [onMessage, offMessage]);
 
   const startSession = async () => {
-    if (status === 'authenticated') {
+    if (status === 'session-started') return;
+
+    try {
+      if (status !== 'authenticated') {
+        await connect();
+      }
       send({ type: 'start' });
-    } else {
-      await connect();
+    } catch (err) {
+      console.error('Failed to start session:', err);
+      xtermRef.current?.writeln(`\r\n❌ Failed to start session: ${err instanceof Error ? err.message : 'Unknown error'}\r\n`);
     }
   };
 
