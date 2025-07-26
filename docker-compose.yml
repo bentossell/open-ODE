@@ -1,10 +1,26 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
+  caddy:
+    image: caddy:2-alpine
     ports:
-      - "3000:3000"  # HTTP and WebSocket on same port
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - node
+    restart: unless-stopped
+    networks:
+      - openode-network
+
+  node:
+    build: .
+    container_name: openode-node
+    expose:
+      - "3000"  # Only exposed internally to Caddy
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -14,3 +30,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./workspaces:/app/workspaces
     restart: unless-stopped
+    networks:
+      - openode-network
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  openode-network:
+    driver: bridge
