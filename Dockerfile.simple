@@ -1,0 +1,25 @@
+FROM node:18-alpine
+
+# Install dependencies for node-pty and Docker CLI
+RUN apk add --no-cache python3 make g++ bash docker-cli
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy server files only
+COPY server.js ./
+COPY .env ./
+
+# Copy pre-built client files if they exist
+COPY client/build ./client/build
+
+# Expose ports
+EXPOSE 3000 8081
+
+# Start the server
+CMD ["node", "server.js"]
