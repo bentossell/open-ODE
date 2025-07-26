@@ -55,6 +55,43 @@
   }
   body {
     @apply bg-background text-foreground m-0 font-sans antialiased;
+    /* Improve mobile touch interactions */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+  
+  /* Allow text selection for specific elements */
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+}
+
+/* Mobile-specific improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Mobile devices - remove hover states and focus on active states */
+  button:hover {
+    background-color: initial !important;
+  }
+  
+  button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  /* Ensure buttons are touch-friendly */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
