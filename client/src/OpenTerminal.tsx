@@ -33,7 +33,11 @@ export const OpenTerminal: React.FC = () => {
   useEffect(() => {
     if (!terminalRef.current || xtermRef.current) return;
 
-    const term = new Terminal({
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (!terminalRef.current) return;
+
+      const term = new Terminal({
       cursorBlink: true,
       fontSize: 14,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
@@ -112,17 +116,30 @@ export const OpenTerminal: React.FC = () => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      term.dispose();
-      xtermRef.current = null;
+      if (xtermRef.current) {
+        xtermRef.current.dispose();
+        xtermRef.current = null;
+      }
+    };
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (xtermRef.current) {
+        xtermRef.current.dispose();
+        xtermRef.current = null;
+      }
     };
   }, [send, sessionStarted]);
 
   // Connect WebSocket on mount
   useEffect(() => {
-    connect().catch(err => {
-      console.error('Failed to connect WebSocket:', err);
-    });
-  }, [connect]);
+    if (status === 'disconnected') {
+      connect().catch(err => {
+        console.error('Failed to connect WebSocket:', err);
+      });
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   // Handle WebSocket messages
   useEffect(() => {
@@ -147,10 +164,10 @@ export const OpenTerminal: React.FC = () => {
     
     xtermRef.current?.writeln('\r\n🔄 Starting session...\r\n');
     
-    if (status === 'authenticated') {
-      send({ type: 'start' });
-    } else {
+    if (status === 'disconnected') {
       await connect();
+    } else if (status === 'authenticated') {
+      send({ type: 'start' });
     }
   };
 
