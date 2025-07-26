@@ -8,10 +8,6 @@ import { Auth } from './components/Auth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function AppContent() {
-  // TEMPORARY: Skip auth and WebSocket, go straight to BareTerminal
-  return <BareTerminal />;
-  
-  /*
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -35,22 +31,17 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <WebSocketProvider>
-        <OpenTerminal />
+        <BareTerminal />
       </WebSocketProvider>
     </ErrorBoundary>
   );
-  */
 }
 
 function App() {
   return (
-    // TEMPORARY: Skip AuthProvider wrapper
-    <AppContent />
-    /*
     <AuthProvider>
       <AppContent />
     </AuthProvider>
-    */
   );
 }
 
